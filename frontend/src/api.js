@@ -26,6 +26,9 @@ export const api = {
   updateGalleta: (id, payload) => request(`/galletas/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   deleteGalleta: (id) => request(`/galletas/${id}`, { method: 'DELETE' }),
 
+  getClientes: () => request('/clientes'),
+  updateCliente: (id, payload) => request(`/clientes/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+
   getPedidos: () => request('/pedidos'),
   getPedido: (id) => request(`/pedidos/${id}`),
   crearPedido: (payload) => request('/pedidos', { method: 'POST', body: JSON.stringify(payload) }),
