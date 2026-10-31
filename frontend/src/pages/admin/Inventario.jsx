@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Table, Button, Modal, Form, Input, InputNumber, Select, Switch, Space, Popconfirm, message, Image } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { api } from '../../api.js'
+import { FOTO_RESPALDO } from '../../fotos.js'
 
 const currency = (n) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
@@ -70,7 +71,7 @@ export default function Inventario() {
     {
       title: 'Foto',
       dataIndex: 'fotoUrl',
-      render: (url) => <Image src={url} width={60} height={45} style={{ objectFit: 'cover' }} />,
+      render: (url) => <Image src={url} fallback={FOTO_RESPALDO} width={60} height={45} style={{ objectFit: 'cover' }} />,
     },
     { title: 'Nombre', dataIndex: 'nombre' },
     { title: 'Categoría', dataIndex: ['categoria', 'nombre'] },
@@ -116,7 +117,7 @@ export default function Inventario() {
             <Input.TextArea rows={2} />
           </Form.Item>
           <Form.Item name="fotoUrl" label="URL de la foto" rules={[{ required: true }]}>
-            <Input placeholder="https://..." />
+            <Input placeholder="https://... o /galletas/archivo.svg" />
           </Form.Item>
           <Form.Item name="categoriaId" label="Categoría" rules={[{ required: true }]}>
             <Select options={categorias.map((c) => ({ value: c.id, label: c.nombre }))} />
