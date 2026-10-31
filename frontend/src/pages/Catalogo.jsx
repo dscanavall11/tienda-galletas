@@ -4,6 +4,7 @@ import { ShoppingCartOutlined, SearchOutlined } from '@ant-design/icons'
 import { api } from '../api.js'
 import { useCart } from '../context/CartContext.jsx'
 import { currency } from '../format.js'
+import { FOTO_RESPALDO } from '../fotos.js'
 
 export default function Catalogo() {
   const [galletas, setGalletas] = useState([])
@@ -78,6 +79,10 @@ export default function Catalogo() {
                     <img
                       alt={g.nombre}
                       src={g.fotoUrl}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = FOTO_RESPALDO
+                      }}
                       style={{ height: 180, objectFit: 'cover', filter: sinStock ? 'grayscale(1)' : undefined }}
                     />
                   }
