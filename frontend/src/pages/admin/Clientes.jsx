@@ -4,6 +4,7 @@ import { EditOutlined } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
 import { api } from '../../api.js'
 import { currency, fechaHora } from '../../format.js'
+import TagEstado from '../../components/TagEstado.jsx'
 
 // Historial de compras de un cliente (fila expandida): un cliente, muchos
 // pedidos — la relación 1:N que justifica tener Cliente separado de Pedido.
@@ -15,6 +16,7 @@ const columnasHistorial = [
   { title: 'Fecha', dataIndex: 'fecha', render: fechaHora },
   { title: 'Items', render: (_, p) => p.detalles.reduce((suma, d) => suma + d.cantidad, 0) },
   { title: 'Total', render: (_, p) => currency(p.factura?.total ?? 0) },
+  { title: 'Estado', dataIndex: 'estado', render: (e) => <TagEstado estado={e} /> },
 ]
 
 export default function Clientes() {
@@ -52,7 +54,10 @@ export default function Clientes() {
       return {
         ...c,
         historial,
-        totalComprado: historial.reduce((suma, p) => suma + (p.factura?.total ?? 0), 0),
+        // Lo cancelado no cuenta como compra.
+        totalComprado: historial
+          .filter((p) => p.estado.codigo !== 'CANCELADO')
+          .reduce((suma, p) => suma + (p.factura?.total ?? 0), 0),
       }
     })
   }, [clientes, pedidos])

@@ -1,6 +1,6 @@
 {
   "name": "tienda-galletas-backend",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "API REST para demo academica de tienda de galletas (Express + Prisma + SQLite)",
   "main": "src/index.js",

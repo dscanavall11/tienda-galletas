@@ -1,12 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Alert, Descriptions, Table, Typography, Button, Flex, Space, Spin, Result } from 'antd'
+import { Alert, Descriptions, Table, Typography, Button, Flex, Space, Spin, Result, Steps, Timeline } from 'antd'
 import { PrinterOutlined } from '@ant-design/icons'
 import { api } from '../api.js'
 import { currency, fechaHora } from '../format.js'
+import TagEstado from '../components/TagEstado.jsx'
+
+const REFRESCO_MS = 5000
+
+// Paso del seguimiento según el estado; ENTREGADO marca todos como completos.
+const PASO = { PENDIENTE: 0, EN_PREPARACION: 1, LISTO: 2, ENTREGADO: 4 }
+const TERMINALES = ['ENTREGADO', 'CANCELADO']
 
 // La misma factura se ve en las dos caras: /factura/:id (cliente) y
-// /admin/facturas/:id (panel). Solo cambia a dónde lleva el botón de volver.
+// /admin/facturas/:id (panel). Cambian el botón de volver y el seguimiento:
+// el cliente ve en qué punto de la cola va su pedido; la administración ve
+// el historial de estados.
 export default function Factura() {
   const { id } = useParams()
   const { pathname, state } = useLocation()
@@ -15,12 +24,26 @@ export default function Factura() {
   const [pedido, setPedido] = useState(null)
   const [error, setError] = useState(null)
 
+  const cargar = useCallback(
+    () =>
+      api
+        .getPedido(id)
+        .then(setPedido)
+        .catch((e) => setError(e.message)),
+    [id]
+  )
+
   useEffect(() => {
-    api
-      .getPedido(id)
-      .then(setPedido)
-      .catch((e) => setError(e.message))
-  }, [id])
+    cargar()
+  }, [cargar])
+
+  // El cliente ve avanzar su pedido sin recargar mientras siga en curso.
+  const enCurso = pedido && !TERMINALES.includes(pedido.estado.codigo)
+  useEffect(() => {
+    if (esAdmin || !enCurso) return
+    const t = setInterval(cargar, REFRESCO_MS)
+    return () => clearInterval(t)
+  }, [esAdmin, enCurso, cargar])
 
   if (error) return <Result status="404" title="Factura no encontrada" subTitle={error} />
   if (!pedido) return <Spin size="large" style={{ display: 'block', marginTop: 80 }} />
@@ -32,6 +55,8 @@ export default function Factura() {
     { title: 'Subtotal', render: (_, row) => currency(row.precioUnitario * row.cantidad) },
   ]
 
+  const cancelado = pedido.estado.codigo === 'CANCELADO'
+
   return (
     <div>
       {state?.nueva && (
@@ -41,9 +66,33 @@ export default function Factura() {
           showIcon
           style={{ marginBottom: 16 }}
           title="¡Gracias por tu compra!"
-          description="Tu pedido quedó registrado. Esta es tu factura; puedes imprimirla o guardarla en PDF."
+          description="Tu pedido quedó registrado y entró a la cola de preparación. Esta es tu factura; puedes imprimirla o guardarla en PDF."
         />
       )}
+
+      {!esAdmin && (
+        <div className="no-print" style={{ marginBottom: 16 }}>
+          {cancelado ? (
+            <Alert type="error" showIcon title="Este pedido fue cancelado" description="Las galletas volvieron al inventario." />
+          ) : (
+            <>
+              <Steps
+                size="small"
+                current={PASO[pedido.estado.codigo]}
+                items={[{ title: 'Recibido' }, { title: 'Preparando' }, { title: 'Listo' }, { title: 'Entregado' }]}
+              />
+              {pedido.posicionCola && (
+                <Typography.Paragraph type="secondary" style={{ marginTop: 12, marginBottom: 0 }}>
+                  {pedido.posicionCola === 1
+                    ? 'Eres el siguiente en la cola.'
+                    : `Hay ${pedido.posicionCola - 1} pedido(s) antes que el tuyo en la cola.`}
+                </Typography.Paragraph>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       <Flex justify="space-between" align="center" wrap gap="small">
         <Typography.Title level={3}>Factura {pedido.factura?.numero}</Typography.Title>
         <Space className="no-print">
@@ -64,7 +113,9 @@ export default function Factura() {
           {pedido.cliente.direccion || '-'}
         </Descriptions.Item>
         <Descriptions.Item label="Fecha">{fechaHora(pedido.factura?.fechaEmision || pedido.fecha)}</Descriptions.Item>
-        <Descriptions.Item label="Estado">{pedido.estado}</Descriptions.Item>
+        <Descriptions.Item label="Estado">
+          <TagEstado estado={pedido.estado} />
+        </Descriptions.Item>
       </Descriptions>
       <Table rowKey="id" dataSource={pedido.detalles} columns={columns} pagination={false} />
       <div style={{ marginTop: 16, textAlign: 'right' }}>
@@ -72,6 +123,15 @@ export default function Factura() {
         <div>IVA (19%): {currency(pedido.factura?.impuesto)}</div>
         <div style={{ fontSize: 18, fontWeight: 700 }}>Total: {currency(pedido.factura?.total)}</div>
       </div>
+
+      {esAdmin && (
+        <div className="no-print" style={{ marginTop: 24 }}>
+          <Typography.Title level={5}>Historial de estados</Typography.Title>
+          <Timeline
+            items={pedido.historial.map((h) => ({ title: fechaHora(h.fecha), content: h.estado.nombre }))}
+          />
+        </div>
+      )}
     </div>
   )
 }
