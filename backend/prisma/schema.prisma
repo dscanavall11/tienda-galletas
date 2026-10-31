@@ -1,0 +1,96 @@
+// Modelo de datos normalizado a 3FN para la demo de la tienda de galletas.
+// Nota académica sobre tipos: los montos usan Float (no Decimal) porque el
+// conector de SQLite en Prisma no soporta Decimal de forma confiable; en un
+// motor real (Postgres/MySQL) se preferiría Decimal o enteros en centavos.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Evita repetir el nombre de categoría como texto libre en cada galleta
+// (elimina una dependencia transitiva Galleta -> nombreCategoria -> ... => 3FN).
+model Categoria {
+  id       Int       @id @default(autoincrement())
+  nombre   String    @unique
+  galletas Galleta[]
+
+  @@map("categorias")
+}
+
+model Galleta {
+  id          Int             @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  fotoUrl     String
+  precio      Float
+  stock       Int             @default(0)
+  activa      Boolean         @default(true)
+  categoriaId Int
+  categoria   Categoria       @relation(fields: [categoriaId], references: [id])
+  detalles    DetallePedido[]
+
+  @@map("galletas")
+}
+
+// Los datos del cliente se capturan una sola vez y se reutilizan por email;
+// evita duplicar nombre/dirección/teléfono en cada pedido.
+model Cliente {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  email     String   @unique
+  telefono  String?
+  direccion String?
+  documento String?
+  pedidos   Pedido[]
+
+  @@map("clientes")
+}
+
+// El pedido NO guarda un total denormalizado: el total real vive en Factura,
+// calculado a partir del detalle. Esto evita datos derivados desincronizados.
+model Pedido {
+  id        Int             @id @default(autoincrement())
+  clienteId Int
+  cliente   Cliente         @relation(fields: [clienteId], references: [id])
+  fecha     DateTime        @default(now())
+  estado    String          @default("CONFIRMADO")
+  detalles  DetallePedido[]
+  factura   Factura?
+
+  @@map("pedidos")
+}
+
+// Entidad asociativa que resuelve la relación N:M entre Pedido y Galleta.
+// precioUnitario es una "foto" del precio al momento de la venta: si la
+// galleta cambia de precio después, esta factura histórica no se altera.
+model DetallePedido {
+  id             Int     @id @default(autoincrement())
+  pedidoId       Int
+  pedido         Pedido  @relation(fields: [pedidoId], references: [id])
+  galletaId      Int
+  galleta        Galleta @relation(fields: [galletaId], references: [id])
+  cantidad       Int
+  precioUnitario Float
+
+  @@map("detalle_pedido")
+}
+
+// Documento fiscal separado del pedido comercial (relación 1:1 vía
+// pedidoId @unique). Modela que "pedido" y "factura" son conceptos distintos.
+model Factura {
+  id           Int      @id @default(autoincrement())
+  pedidoId     Int      @unique
+  pedido       Pedido   @relation(fields: [pedidoId], references: [id])
+  numero       String   @unique
+  fechaEmision DateTime @default(now())
+  subtotal     Float
+  impuesto     Float
+  total        Float
+
+  @@map("facturas")
+}
