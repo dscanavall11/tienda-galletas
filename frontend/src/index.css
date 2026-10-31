@@ -13,8 +13,32 @@ body {
   color: #202124;
 }
 
+.admin-brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 64px;
+  padding: 0 24px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.ant-layout-sider-collapsed .admin-brand {
+  align-items: center;
+  padding: 0;
+}
+
+.admin-brand small {
+  color: #9aa0a6;
+  font-size: 12px;
+  font-weight: 400;
+}
+
 @media print {
   .no-print,
+  .ant-layout-sider,
   .ant-layout-header,
   .ant-layout-footer {
     display: none !important;

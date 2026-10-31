@@ -6,6 +6,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 > Las versiones 1.0.0 a 1.2.0 se reconstruyeron al registrar el repositorio (2026-10-31) a partir
 > de las etapas reales del desarrollo de la demo.
 
+## [1.1.0] - 2026-10-31
+
+### Añadido
+- **Dos caras** en una sola app: la tienda para clientes en `/` y el panel de administración en
+  `/admin`, cada una con su layout y navegación.
+- Panel: *Resumen* (estadísticas, stock bajo, últimos pedidos) y *Clientes* (historial de compras
+  y edición de datos). API: `PUT /api/clientes/:id`.
+- Catálogo con filtro por categoría y búsqueda; la factura se puede abrir desde ambas caras.
+- Ilustraciones locales realistas de cada galleta (`frontend/public/galletas/`) e imagen de
+  respaldo cuando una foto no carga.
+
+### Cambiado
+- El seed reinicia la numeración de ids para que las pestañas abiertas no apunten a filas
+  inexistentes tras un reseed.
+- Menú lateral del panel: se pliega a un riel de iconos en pantallas pequeñas.
+- Título e idioma de la página; migración de `destroyOnClose` a `destroyOnHidden` (Ant Design 6).
+
+### Corregido
+- Las fotos de las galletas no cargaban porque el servicio externo del que dependían respondía
+  HTTP 500; ahora son archivos locales.
+
 ## [1.0.1] - 2026-10-31
 
 ### Corregido

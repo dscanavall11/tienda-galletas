@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Form, Input, Button, Typography, List, message } from 'antd'
+import { Form, Input, Button, Typography, Card, Flex, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api.js'
 import { useCart } from '../context/CartContext.jsx'
-
-const currency = (n) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
+import { currency } from '../format.js'
 
 export default function Checkout() {
   const { items, total, clear } = useCart()
@@ -30,7 +28,7 @@ export default function Checkout() {
         items: items.map((i) => ({ galletaId: i.galletaId, cantidad: i.cantidad })),
       })
       message.success('¡Compra confirmada!')
-      navigate(`/factura/${pedido.id}`)
+      navigate(`/factura/${pedido.id}`, { state: { nueva: true } })
       clear()
     } catch (e) {
       message.error(e.message)
@@ -68,20 +66,27 @@ export default function Checkout() {
           </Button>
         </Form>
       </div>
-      <div style={{ width: 320 }}>
-        <Typography.Title level={4}>Resumen del pedido</Typography.Title>
-        <List
-          size="small"
-          dataSource={items}
-          renderItem={(i) => (
-            <List.Item>
-              {i.nombre} x{i.cantidad} — {currency(i.precio * i.cantidad)}
-            </List.Item>
-          )}
-        />
-        <div style={{ marginTop: 12, fontSize: 16 }}>
-          Total: <b>{currency(total)}</b>
-        </div>
+      <div style={{ width: 320, maxWidth: '100%' }}>
+        <Card size="small" title="Resumen del pedido">
+          {items.map((i) => (
+            <Flex key={i.galletaId} justify="space-between" gap="small" style={{ padding: '6px 0' }}>
+              <span>
+                {i.nombre} × {i.cantidad}
+              </span>
+              <span>{currency(i.precio * i.cantidad)}</span>
+            </Flex>
+          ))}
+          <Flex
+            justify="space-between"
+            style={{ borderTop: '1px solid #dadce0', marginTop: 8, paddingTop: 8, fontWeight: 600 }}
+          >
+            <span>Total</span>
+            <span>{currency(total)}</span>
+          </Flex>
+        </Card>
+        <Button type="link" onClick={() => navigate('/carrito')} style={{ paddingInline: 0 }}>
+          Volver al carrito
+        </Button>
       </div>
     </div>
   )
