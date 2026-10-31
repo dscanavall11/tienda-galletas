@@ -26,3 +26,10 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`API tienda-galletas escuchando en http://localhost:${PORT}`);
 });
+
+// Red de seguridad: en Express 4 un error async no capturado en una ruta
+// tumba todo el proceso. Si algo se escapa de los try/catch de las rutas,
+// esto evita que la demo entera se caiga por una sola peticion mala.
+process.on('unhandledRejection', (err) => {
+  console.error('unhandledRejection (peticion ignorada, servidor sigue vivo):', err);
+});
