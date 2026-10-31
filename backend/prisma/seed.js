@@ -29,6 +29,10 @@ async function main() {
   await prisma.galleta.deleteMany();
   await prisma.cliente.deleteMany();
   await prisma.categoria.deleteMany();
+  // AUTOINCREMENT recuerda el ultimo id en sqlite_sequence: sin esto cada
+  // reseed sigue la numeracion (11, 12, ...) y una pestaña abierta con ids
+  // viejos (carrito, selects del admin) apunta a filas que ya no existen.
+  await prisma.$executeRaw`DELETE FROM sqlite_sequence`;
 
   const categoriasPorNombre = {};
   for (const nombre of CATEGORIAS) {
