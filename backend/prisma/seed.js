@@ -4,6 +4,16 @@ const prisma = new PrismaClient();
 
 const CATEGORIAS = ['Chocolate', 'Avena', 'Mantequilla', 'Rellenas'];
 
+// Tabla de referencia del flujo de la cola de pedidos (la migración ya la
+// carga; aquí se asegura con upsert por si la BD se creó sin ella).
+const ESTADOS = [
+  { codigo: 'PENDIENTE', nombre: 'Pendiente', orden: 1 },
+  { codigo: 'EN_PREPARACION', nombre: 'En preparación', orden: 2 },
+  { codigo: 'LISTO', nombre: 'Listo para entregar', orden: 3 },
+  { codigo: 'ENTREGADO', nombre: 'Entregado', orden: 4 },
+  { codigo: 'CANCELADO', nombre: 'Cancelado', orden: 5 },
+];
+
 // `foto` es el archivo de frontend/public/galletas/ (Vite lo sirve en
 // /galletas/<foto>). Son ilustraciones locales para que la demo no dependa de
 // internet ni de servicios de terceros; desde Inventario se puede pegar
@@ -25,6 +35,7 @@ async function main() {
   console.log('Reiniciando datos de la demo...');
   await prisma.factura.deleteMany();
   await prisma.detallePedido.deleteMany();
+  await prisma.pedidoHistorial.deleteMany();
   await prisma.pedido.deleteMany();
   await prisma.galleta.deleteMany();
   await prisma.cliente.deleteMany();
@@ -32,7 +43,16 @@ async function main() {
   // AUTOINCREMENT recuerda el ultimo id en sqlite_sequence: sin esto cada
   // reseed sigue la numeracion (11, 12, ...) y una pestaña abierta con ids
   // viejos (carrito, selects del admin) apunta a filas que ya no existen.
-  await prisma.$executeRaw`DELETE FROM sqlite_sequence`;
+  // `estados_pedido` es de referencia y no se borra, así que se conserva.
+  await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name != 'estados_pedido'`;
+
+  for (const e of ESTADOS) {
+    await prisma.estadoPedido.upsert({
+      where: { codigo: e.codigo },
+      update: { nombre: e.nombre, orden: e.orden },
+      create: e,
+    });
+  }
 
   const categoriasPorNombre = {};
   for (const nombre of CATEGORIAS) {
