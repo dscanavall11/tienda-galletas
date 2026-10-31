@@ -14,4 +14,17 @@ export const themeTokens = {
     borderRadius: 8,
     fontFamily: "'Google Sans', Roboto, Arial, sans-serif",
   },
+  components: {
+    // Cara de administración: barra lateral en gris oscuro (misma familia de
+    // grises) en lugar del azul marino por defecto de antd.
+    Layout: { siderBg: '#202124', triggerBg: '#3c4043' },
+    Menu: {
+      darkItemBg: '#202124',
+      darkSubMenuItemBg: '#202124',
+      darkItemColor: '#bdc1c6',
+      darkItemHoverColor: '#ffffff',
+      darkItemSelectedBg: '#3c4043',
+      darkItemSelectedColor: '#ffffff',
+    },
+  },
 };

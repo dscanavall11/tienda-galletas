@@ -25,4 +25,21 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Edicion desde el panel de administracion. El email sigue siendo unico: si
+// choca con otro cliente se responde 409 en vez de dejar caer el servidor.
+router.put('/:id', async (req, res) => {
+  const { nombre, email, telefono, direccion, documento } = req.body;
+  if (!nombre || !email) return res.status(400).json({ error: 'nombre y email son requeridos' });
+  try {
+    const cliente = await prisma.cliente.update({
+      where: { id: Number(req.params.id) },
+      data: { nombre, email, telefono, direccion, documento },
+    });
+    res.json(cliente);
+  } catch (e) {
+    if (e.code === 'P2002') return res.status(409).json({ error: 'ya existe otro cliente con ese email' });
+    res.status(404).json({ error: 'cliente no encontrado' });
+  }
+});
+
 module.exports = router;

@@ -106,7 +106,7 @@ export default function Inventario() {
         onCancel={() => setModalOpen(false)}
         okText="Guardar"
         cancelText="Cancelar"
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical">
           <Form.Item name="nombre" label="Nombre" rules={[{ required: true }]}>

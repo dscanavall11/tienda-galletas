@@ -86,7 +86,7 @@ export default function Categorias() {
         onCancel={() => setModalOpen(false)}
         okText="Guardar"
         cancelText="Cancelar"
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical">
           <Form.Item name="nombre" label="Nombre" rules={[{ required: true }]}>
