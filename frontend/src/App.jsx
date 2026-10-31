@@ -1,10 +1,13 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { Layout, Menu, Badge } from 'antd'
-import { ShopOutlined, ShoppingCartOutlined } from '@ant-design/icons'
+import { ShopOutlined, ShoppingCartOutlined, SettingOutlined } from '@ant-design/icons'
 import Catalogo from './pages/Catalogo.jsx'
 import Carrito from './pages/Carrito.jsx'
 import Checkout from './pages/Checkout.jsx'
 import Factura from './pages/Factura.jsx'
+import Inventario from './pages/admin/Inventario.jsx'
+import Categorias from './pages/admin/Categorias.jsx'
+import Pedidos from './pages/admin/Pedidos.jsx'
 import { useCart } from './context/CartContext.jsx'
 
 const { Header, Content, Footer } = Layout
@@ -24,7 +27,19 @@ export default function App() {
       ),
       label: <Link to="/carrito">Carrito</Link>,
     },
+    {
+      key: 'admin',
+      icon: <SettingOutlined />,
+      label: 'Administración',
+      children: [
+        { key: '/admin/inventario', label: <Link to="/admin/inventario">Inventario</Link> },
+        { key: '/admin/categorias', label: <Link to="/admin/categorias">Categorías</Link> },
+        { key: '/admin/pedidos', label: <Link to="/admin/pedidos">Pedidos y facturas</Link> },
+      ],
+    },
   ]
+
+  const selectedKey = location.pathname.startsWith('/admin') ? location.pathname : location.pathname
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -40,7 +55,7 @@ export default function App() {
         <div style={{ fontWeight: 600, fontSize: 18, color: '#202124', marginRight: 32, whiteSpace: 'nowrap' }}>
           Tienda de Galletas
         </div>
-        <Menu mode="horizontal" selectedKeys={[location.pathname]} items={items} style={{ flex: 1, borderBottom: 'none' }} />
+        <Menu mode="horizontal" selectedKeys={[selectedKey]} items={items} style={{ flex: 1, borderBottom: 'none' }} />
       </Header>
       <Content style={{ padding: 24, maxWidth: 1100, margin: '0 auto', width: '100%' }}>
         <Routes>
@@ -48,6 +63,9 @@ export default function App() {
           <Route path="/carrito" element={<Carrito />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/factura/:id" element={<Factura />} />
+          <Route path="/admin/inventario" element={<Inventario />} />
+          <Route path="/admin/categorias" element={<Categorias />} />
+          <Route path="/admin/pedidos" element={<Pedidos />} />
         </Routes>
       </Content>
       <Footer className="no-print" style={{ textAlign: 'center', color: '#5f6368', background: '#f1f3f4' }}>
