@@ -28,18 +28,22 @@ router.post('/', async (req, res) => {
   if (!nombre || !fotoUrl || precio === undefined || !categoriaId) {
     return res.status(400).json({ error: 'nombre, fotoUrl, precio y categoriaId son requeridos' });
   }
-  const galleta = await prisma.galleta.create({
-    data: {
-      nombre,
-      descripcion,
-      fotoUrl,
-      precio: Number(precio),
-      stock: stock !== undefined ? Number(stock) : 0,
-      categoriaId: Number(categoriaId),
-      activa: activa ?? true,
-    },
-  });
-  res.status(201).json(galleta);
+  try {
+    const galleta = await prisma.galleta.create({
+      data: {
+        nombre,
+        descripcion,
+        fotoUrl,
+        precio: Number(precio),
+        stock: stock !== undefined ? Number(stock) : 0,
+        categoriaId: Number(categoriaId),
+        activa: activa ?? true,
+      },
+    });
+    res.status(201).json(galleta);
+  } catch (e) {
+    res.status(400).json({ error: 'categoriaId invalido: la categoria no existe' });
+  }
 });
 
 router.put('/:id', async (req, res) => {

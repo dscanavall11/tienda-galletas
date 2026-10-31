@@ -13,12 +13,16 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { nombre, email, telefono, direccion, documento } = req.body;
   if (!nombre || !email) return res.status(400).json({ error: 'nombre y email son requeridos' });
-  const cliente = await prisma.cliente.upsert({
-    where: { email },
-    update: { nombre, telefono, direccion, documento },
-    create: { nombre, email, telefono, direccion, documento },
-  });
-  res.status(200).json(cliente);
+  try {
+    const cliente = await prisma.cliente.upsert({
+      where: { email },
+      update: { nombre, telefono, direccion, documento },
+      create: { nombre, email, telefono, direccion, documento },
+    });
+    res.status(200).json(cliente);
+  } catch (e) {
+    res.status(400).json({ error: 'no se pudo guardar el cliente' });
+  }
 });
 
 module.exports = router;
