@@ -1,0 +1,26 @@
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+  background: #f1f3f4;
+  color: #202124;
+}
+
+@media print {
+  .no-print,
+  .ant-layout-header,
+  .ant-layout-footer {
+    display: none !important;
+  }
+  .ant-layout-content {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+}
