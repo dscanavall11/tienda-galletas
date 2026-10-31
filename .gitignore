@@ -1,0 +1,15 @@
+# Dependencias y artefactos de build
+node_modules/
+dist/
+
+# Configuración local (se crea con `npm run env:init` a partir de backend/.env.example)
+.env
+
+# Base de datos SQLite local (se genera con `npm run db:deploy` y `npm run db:seed`)
+*.db
+*.db-journal
+
+# Logs y archivos del sistema
+*.log
+.DS_Store
+Thumbs.db

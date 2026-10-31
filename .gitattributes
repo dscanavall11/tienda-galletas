@@ -1,0 +1,3 @@
+# Texto normalizado a LF en el repositorio y en el árbol de trabajo (Windows/macOS/Linux).
+* text=auto eol=lf
+*.png binary
