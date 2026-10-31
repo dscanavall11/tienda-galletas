@@ -3,9 +3,13 @@ import { Row, Col, Card, Statistic, Table, Tag, Typography, message } from 'antd
 import { Link } from 'react-router-dom'
 import { api } from '../../api.js'
 import { currency, fechaHora } from '../../format.js'
+import TagEstado from '../../components/TagEstado.jsx'
 
 // Una galleta activa con este stock o menos aparece en "Stock bajo".
 const STOCK_BAJO = 10
+
+// Estados que cuentan como "en cola" (aún no entregados ni cancelados).
+const ESTADOS_EN_COLA = ['PENDIENTE', 'EN_PREPARACION', 'LISTO']
 
 export default function Dashboard() {
   const [galletas, setGalletas] = useState([])
@@ -28,7 +32,11 @@ export default function Dashboard() {
     () => ({
       activas: galletas.filter((g) => g.activa).length,
       unidades: galletas.reduce((suma, g) => suma + g.stock, 0),
-      ventas: pedidos.reduce((suma, p) => suma + (p.factura?.total ?? 0), 0),
+      // Un pedido cancelado no es una venta.
+      ventas: pedidos
+        .filter((p) => p.estado.codigo !== 'CANCELADO')
+        .reduce((suma, p) => suma + (p.factura?.total ?? 0), 0),
+      enCola: pedidos.filter((p) => ESTADOS_EN_COLA.includes(p.estado.codigo)).length,
     }),
     [galletas, pedidos]
   )
@@ -38,6 +46,7 @@ export default function Dashboard() {
   const estadisticas = [
     { titulo: 'Galletas activas', valor: resumen.activas },
     { titulo: 'Unidades en stock', valor: resumen.unidades },
+    { titulo: 'Pedidos en cola', valor: resumen.enCola },
     { titulo: 'Pedidos', valor: pedidos.length },
     { titulo: 'Clientes', valor: clientes.length },
     { titulo: 'Ventas totales', valor: resumen.ventas, formato: currency },
@@ -100,6 +109,7 @@ export default function Dashboard() {
                 { title: 'Cliente', dataIndex: ['cliente', 'nombre'] },
                 { title: 'Fecha', dataIndex: 'fecha', render: fechaHora },
                 { title: 'Total', dataIndex: ['factura', 'total'], render: currency },
+                { title: 'Estado', dataIndex: 'estado', render: (e) => <TagEstado estado={e} /> },
               ]}
             />
           </Card>
