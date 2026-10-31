@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+<defs>
+  <radialGradient id="mesa" cx="50%" cy="44%" r="78%">
+    <stop offset="0" stop-color="#fcfbf9"/><stop offset="1" stop-color="#d6d2ca"/>
+  </radialGradient>
+  <radialGradient id="masaGrad" cx="50%" cy="50%" r="58%" fx="40%" fy="36%">
+    <stop offset="0" stop-color="#f0cc90"/><stop offset="0.72" stop-color="#dba75f"/><stop offset="1" stop-color="#b47a35"/>
+  </radialGradient>
+  <filter id="sombra" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9"/></filter>
+  <filter id="masa" x="-12%" y="-12%" width="124%" height="124%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="91" result="warp"/>
+    <feDisplacementMap in="SourceGraphic" in2="warp" scale="8" xChannelSelector="R" yChannelSelector="G" result="forma"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" seed="98" result="grano"/>
+    <feDiffuseLighting in="grano" lighting-color="#ffffff" surfaceScale="2.6" diffuseConstant="1.3" result="luz">
+      <feDistantLight azimuth="235" elevation="56"/>
+    </feDiffuseLighting>
+    <feComposite in="luz" in2="forma" operator="in" result="luzForma"/>
+    <feBlend in="forma" in2="luzForma" mode="multiply" result="textura"/>
+    <feComposite in="textura" in2="forma" operator="in"/>
+  </filter>
+  <filter id="trozo" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="2" seed="94" result="warp"/>
+    <feDisplacementMap in="SourceGraphic" in2="warp" scale="8" xChannelSelector="R" yChannelSelector="G" result="forma"/>
+    <feGaussianBlur in="forma" stdDeviation="0.9" result="suave"/>
+    <feSpecularLighting in="suave" surfaceScale="3.2" specularConstant="1" specularExponent="22" lighting-color="#e8d5c4" result="brillo">
+      <feDistantLight azimuth="235" elevation="52"/>
+    </feSpecularLighting>
+    <feComposite in="brillo" in2="forma" operator="in" result="brilloForma"/>
+    <feComposite in="forma" in2="brilloForma" operator="arithmetic" k1="0" k2="1" k3="0.85" k4="0" result="conBrillo"/>
+    <feDropShadow in="conBrillo" dx="1.6" dy="2.2" stdDeviation="1.6" flood-color="#000" flood-opacity="0.5"/>
+  </filter>
+  <filter id="relieve" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="1" dy="1.6" stdDeviation="1.1" flood-color="#000" flood-opacity="0.38"/>
+  </filter>
+  <linearGradient id="lado" x1="0" x2="1" y1="0" y2="0">
+    <stop offset="0" stop-color="#dba75f"/><stop offset="0.3" stop-color="#f0cc90"/><stop offset="0.72" stop-color="#dba75f"/><stop offset="1" stop-color="#b47a35"/>
+  </linearGradient>
+  <linearGradient id="relleno" x1="0" x2="1" y1="0" y2="0">
+    <stop offset="0" stop-color="#a35d18"/><stop offset="0.3" stop-color="#d88c3a"/><stop offset="0.7" stop-color="#a35d18"/><stop offset="1" stop-color="#a35d18"/>
+  </linearGradient>
+  <filter id="gloss" x="-10%" y="-30%" width="120%" height="160%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="96" result="warp"/>
+    <feDisplacementMap in="SourceGraphic" in2="warp" scale="7" xChannelSelector="R" yChannelSelector="G" result="forma"/>
+    <feGaussianBlur in="forma" stdDeviation="1.4" result="suave"/>
+    <feSpecularLighting in="suave" surfaceScale="4" specularConstant="1.1" specularExponent="26" lighting-color="#ffffff" result="brillo">
+      <feDistantLight azimuth="235" elevation="50"/>
+    </feSpecularLighting>
+    <feComposite in="brillo" in2="forma" operator="in" result="brilloForma"/>
+    <feComposite in="forma" in2="brilloForma" operator="arithmetic" k1="0" k2="1" k3="0.9" k4="0"/>
+  </filter>
+</defs>
+<rect width="400" height="300" fill="url(#mesa)"/>
+<ellipse cx="208" cy="232" rx="124" ry="22" fill="#2a1c10" opacity="0.38" filter="url(#sombra)"/>
+<path d="M92,184 v28 a108,32 0 0 0 216,0 v-28 z" fill="url(#lado)" filter="url(#masa)"/>
+<path d="M87,156 v30 a113,33 0 0 0 226,0 v-30 z" fill="url(#relleno)" filter="url(#gloss)"/>
+
+<path d="M96,170 Q200,184 304,170" stroke="#ffffff" stroke-opacity="0.35" stroke-width="3" fill="none" stroke-linecap="round"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(152.4 162.8) rotate(46.1)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(102.8 165.9) rotate(204.5)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(262.6 169.4) rotate(30.9)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(201.7 162) rotate(282.4)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(230.1 166.7) rotate(199.9)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(182.1 168.2) rotate(140.9)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(240.7 161.3) rotate(188)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(127.1 157.4) rotate(293.4)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(102.7 163.4) rotate(54.8)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(212 173.4) rotate(264.7)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(279.6 151) rotate(186.3)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(104.3 152) rotate(79.6)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(179.2 167.8) rotate(230.2)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(198 163.9) rotate(64.2)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(147.8 170.5) rotate(302.8)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(104.3 166.6) rotate(38.8)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(97.8 154.2) rotate(149)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(223 154.2) rotate(64.6)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(175.4 170.3) rotate(214.4)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(155.8 152.8) rotate(221.7)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(142.6 166.5) rotate(310.3)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(200 156.5) rotate(140.4)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(175 152.6) rotate(190.5)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(98.8 150.6) rotate(84.6)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(165.1 163) rotate(241.7)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(249.7 170) rotate(347.8)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(235 161.4) rotate(125.2)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(168.9 157.8) rotate(41.7)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(168.9 150.4) rotate(52.1)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(245.1 170.5) rotate(317.1)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(264.3 151.4) rotate(10.2)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(126.5 167.5) rotate(137.7)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(270.7 173.1) rotate(184)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(188.5 171.9) rotate(85.7)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(161.7 170) rotate(46.9)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(258.3 157.8) rotate(160.5)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(245.1 158.5) rotate(86)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(172.8 167.5) rotate(209.9)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(192.4 154.2) rotate(39.2)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(297.5 153) rotate(113.3)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(110.3 170.9) rotate(125.3)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(134 168) rotate(77.9)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(117.3 160.8) rotate(225.8)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(217.3 165.2) rotate(327.4)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(296.4 160.8) rotate(260.2)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(228.8 166.6) rotate(182.4)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(193.9 163.5) rotate(312.9)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(191.9 159.9) rotate(134.6)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(150.5 170.4) rotate(152.9)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(171.1 152.3) rotate(72.4)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(97.5 162.3) rotate(306.4)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(141.2 165.4) rotate(139.7)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(186.1 155.1) rotate(1.3)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(233.1 172.1) rotate(266.6)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(129.8 173.4) rotate(264.7)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(108.2 166.5) rotate(173.1)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(171.7 165) rotate(292.3)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(166.7 151.8) rotate(205.1)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(140.4 170.1) rotate(51.1)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(219.7 165.5) rotate(122.9)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(131.9 166.4) rotate(113.8)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(203.9 173.9) rotate(162.4)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(111.4 169.1) rotate(166.3)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(231.4 172.4) rotate(48.2)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(100.7 151.4) rotate(147.3)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(186.2 155) rotate(279.9)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(118.5 171.2) rotate(60.8)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(112.8 169.8) rotate(290.6)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(289.9 151.1) rotate(260.5)" stroke="#fffaf0" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M0,0 q4,-6 10,-1" transform="translate(149.6 171.2) rotate(318)" stroke="#dcae5e" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#relieve)"/>
+<path d="M92,128 v30 a108,32 0 0 0 216,0 v-30 z" fill="url(#lado)" filter="url(#masa)"/>
+<ellipse cx="200" cy="128" rx="108" ry="32" fill="url(#masaGrad)" filter="url(#masa)"/>
+
+</svg>
