@@ -31,5 +31,8 @@ export const api = {
 
   getPedidos: () => request('/pedidos'),
   getPedido: (id) => request(`/pedidos/${id}`),
+  getCola: () => request('/pedidos/cola'),
+  tomarSiguiente: () => request('/pedidos/cola/siguiente', { method: 'POST' }),
+  cambiarEstado: (id, estado) => request(`/pedidos/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ estado }) }),
   crearPedido: (payload) => request('/pedidos', { method: 'POST', body: JSON.stringify(payload) }),
 };

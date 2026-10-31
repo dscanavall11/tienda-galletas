@@ -51,18 +51,50 @@ model Cliente {
   @@map("clientes")
 }
 
+// Tabla de referencia con los estados del flujo de un pedido (la "cola").
+// Evita guardar el estado como texto libre en cada fila de pedidos: un typo ya
+// no puede inventar un estado y renombrar uno es un solo UPDATE. `orden` fija
+// la secuencia del flujo.
+model EstadoPedido {
+  id        Int               @id @default(autoincrement())
+  codigo    String            @unique
+  nombre    String
+  orden     Int
+  pedidos   Pedido[]
+  historial PedidoHistorial[]
+
+  @@map("estados_pedido")
+}
+
 // El pedido NO guarda un total denormalizado: el total real vive en Factura,
 // calculado a partir del detalle. Esto evita datos derivados desincronizados.
+// Tampoco guarda su posición en la cola: sale de `fecha` (FIFO entre los
+// pendientes), en vez de una columna extra que habría que mantener al día.
 model Pedido {
-  id        Int             @id @default(autoincrement())
+  id        Int               @id @default(autoincrement())
   clienteId Int
-  cliente   Cliente         @relation(fields: [clienteId], references: [id])
-  fecha     DateTime        @default(now())
-  estado    String          @default("CONFIRMADO")
+  cliente   Cliente           @relation(fields: [clienteId], references: [id])
+  fecha     DateTime          @default(now())
+  estadoId  Int
+  estado    EstadoPedido      @relation(fields: [estadoId], references: [id])
   detalles  DetallePedido[]
   factura   Factura?
+  historial PedidoHistorial[]
 
   @@map("pedidos")
+}
+
+// Bitácora de transiciones: una fila por cambio de estado (relación 1:N con
+// Pedido). El estado actual vive en Pedido; el historial no se pierde.
+model PedidoHistorial {
+  id       Int          @id @default(autoincrement())
+  pedidoId Int
+  pedido   Pedido       @relation(fields: [pedidoId], references: [id])
+  estadoId Int
+  estado   EstadoPedido @relation(fields: [estadoId], references: [id])
+  fecha    DateTime     @default(now())
+
+  @@map("pedido_historial")
 }
 
 // Entidad asociativa que resuelve la relación N:M entre Pedido y Galleta.

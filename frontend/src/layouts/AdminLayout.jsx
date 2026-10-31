@@ -7,6 +7,7 @@ import {
   TagsOutlined,
   TeamOutlined,
   FileTextOutlined,
+  OrderedListOutlined,
   ShopOutlined,
 } from '@ant-design/icons'
 
@@ -14,6 +15,7 @@ const { Sider, Header, Content } = Layout
 
 const items = [
   { key: '/admin', icon: <DashboardOutlined />, label: <Link to="/admin">Resumen</Link> },
+  { key: '/admin/cola', icon: <OrderedListOutlined />, label: <Link to="/admin/cola">Cola de pedidos</Link> },
   { key: '/admin/inventario', icon: <AppstoreOutlined />, label: <Link to="/admin/inventario">Inventario</Link> },
   { key: '/admin/categorias', icon: <TagsOutlined />, label: <Link to="/admin/categorias">Categorías</Link> },
   { key: '/admin/clientes', icon: <TeamOutlined />, label: <Link to="/admin/clientes">Clientes</Link> },

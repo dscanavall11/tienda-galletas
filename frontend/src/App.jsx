@@ -6,6 +6,7 @@ import Carrito from './pages/Carrito.jsx'
 import Checkout from './pages/Checkout.jsx'
 import Factura from './pages/Factura.jsx'
 import Dashboard from './pages/admin/Dashboard.jsx'
+import Cola from './pages/admin/Cola.jsx'
 import Inventario from './pages/admin/Inventario.jsx'
 import Categorias from './pages/admin/Categorias.jsx'
 import Clientes from './pages/admin/Clientes.jsx'
@@ -24,6 +25,7 @@ export default function App() {
       </Route>
       <Route path="admin" element={<AdminLayout />}>
         <Route index element={<Dashboard />} />
+        <Route path="cola" element={<Cola />} />
         <Route path="inventario" element={<Inventario />} />
         <Route path="categorias" element={<Categorias />} />
         <Route path="clientes" element={<Clientes />} />
