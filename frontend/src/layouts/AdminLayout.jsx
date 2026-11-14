@@ -8,6 +8,7 @@ import {
   TeamOutlined,
   FileTextOutlined,
   OrderedListOutlined,
+  HistoryOutlined,
   ShopOutlined,
   LogoutOutlined,
 } from '@ant-design/icons'
@@ -23,6 +24,7 @@ const items = [
   { key: '/admin/categorias', icon: <TagsOutlined />, label: <Link to="/admin/categorias">Categorías</Link> },
   { key: '/admin/clientes', icon: <TeamOutlined />, label: <Link to="/admin/clientes">Clientes</Link> },
   { key: '/admin/pedidos', icon: <FileTextOutlined />, label: <Link to="/admin/pedidos">Pedidos y facturas</Link> },
+  { key: '/admin/historial', icon: <HistoryOutlined />, label: <Link to="/admin/historial">Historial de pedidos</Link> },
 ]
 
 // Cara de administración: barra lateral + panel. Exige sesión de

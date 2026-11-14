@@ -40,7 +40,7 @@ export const api = {
   getPedidos: () => request('/pedidos'),
   getPedido: (id) => request(`/pedidos/${id}`),
   getCola: () => request('/pedidos/cola'),
-
+  getHistorial: (params = {}) => request(`/pedidos/historial?${new URLSearchParams(params)}`),
   tomarSiguiente: () => request('/pedidos/cola/siguiente', { method: 'POST' }),
   cambiarEstado: (id, estado) => request(`/pedidos/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ estado }) }),
   crearPedido: (payload) => request('/pedidos', { method: 'POST', body: JSON.stringify(payload) }),

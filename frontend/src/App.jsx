@@ -17,6 +17,7 @@ import Inventario from './pages/admin/Inventario.jsx'
 import Categorias from './pages/admin/Categorias.jsx'
 import Clientes from './pages/admin/Clientes.jsx'
 import Pedidos from './pages/admin/Pedidos.jsx'
+import Historial from './pages/admin/Historial.jsx'
 import { useAuth } from './context/AuthContext.jsx'
 
 // Páginas que exigen sesión de cliente. El backend también las protege; esto
@@ -74,6 +75,7 @@ export default function App() {
         <Route path="categorias" element={<Categorias />} />
         <Route path="clientes" element={<Clientes />} />
         <Route path="pedidos" element={<Pedidos />} />
+        <Route path="historial" element={<Historial />} />
         <Route path="facturas/:id" element={<Factura />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
