@@ -12,7 +12,7 @@ Una sola app con dos experiencias, cada una con su propio layout y navegación:
 | Cara | Ruta | Para quién | Qué incluye |
 |---|---|---|---|
 | **Tienda** | `/` | Clientes | Catálogo con filtro y búsqueda, carrito, checkout, factura imprimible y seguimiento del pedido en vivo |
-| **Administración** | `/admin` | Operación | Resumen, cola de pedidos, inventario, categorías, clientes y pedidos/facturas |
+| **Administración** | `/admin` | Operación | Resumen, cola de pedidos, inventario, categorías, clientes, pedidos/facturas e **historial de pedidos** |
 
 > Es una demo académica. Los clientes pueden comprar como invitados o crear una cuenta, y el
 > panel `/admin` exige sesión de administrador (ver [Acceso y cuentas](#acceso-y-cuentas)).
@@ -299,7 +299,7 @@ Rutas marcadas con 🔒 exigen sesión: **cliente** para `/api/auth/*` de perfil
 | POST | `/api/pedidos` | Compra transaccional: valida stock, reutiliza cliente, crea pedido PENDIENTE, descuenta stock y emite factura |
 | GET | `/api/pedidos/:id` | Detalle, factura, historial y `posicionCola` |
 | GET 🔒 | `/api/pedidos/cola` | Pedidos activos en orden de llegada |
-
+| GET 🔒 | `/api/pedidos/historial` | Historial paginado con detalle y bitácora de estados. Filtros: `estado` (lista separada por comas), `desde`/`hasta` (ISO), `q` (cliente, correo o N° de factura), `page`, `pageSize` (máx. 50) y `orden` (`asc`/`desc`). Devuelve además un `resumen` del conjunto filtrado (pedidos, ventas, entregados, cancelados, en curso y ticket promedio) |
 | POST 🔒 | `/api/pedidos/cola/siguiente` | Toma el pedido PENDIENTE más antiguo |
 | PATCH 🔒 | `/api/pedidos/:id/estado` | Cambia el estado (`{ "estado": "LISTO" }`) respetando el flujo |
 | GET | `/api/health` | Salud del servicio |
@@ -356,7 +356,9 @@ Los mensajes de commit siguen *Conventional Commits* (`feat:`, `fix:`, `docs:`, 
    `curl http://localhost:4001/api/clientes`: responde `401`.
 7. Edita el precio de una galleta en **Inventario**: el catálogo cambia, pero las facturas ya
    emitidas conservan el `precioUnitario` histórico.
-8. Reinicia el backend: los datos persisten en `backend/prisma/dev.db`.
+8. En **Historial de pedidos** filtra por estado, fechas o texto, y despliega un pedido para ver
+   sus productos y cuándo pasó por cada estado (el resumen de arriba sigue los filtros).
+9. Reinicia el backend: los datos persisten en `backend/prisma/dev.db`.
 
 ## Fuera de alcance (a propósito, para mantener el ejercicio pequeño)
 

@@ -21,6 +21,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - El seed apunta a `/galletas/*.jpg`; la foto de respaldo (`placeholder.svg`) también es rosa.
 
 ### Añadido
+- **Historial de pedidos** en el panel (`/admin/historial`): todos los pedidos con filtros por
+  estado (todos, en curso, entregados, cancelados), rango de fechas y texto (cliente, correo o
+  N° de factura), paginación y orden por fecha. Un resumen del conjunto filtrado (pedidos, en
+  curso, entregados, cancelados, ventas y ticket promedio) y, al desplegar un pedido, sus
+  productos, datos de entrega y la bitácora de estados con el tiempo hasta la entrega.
+- API `GET /api/pedidos/historial` (solo administrador): filtra y pagina en la base de datos y
+  calcula el resumen con `count`, `groupBy` y `aggregate`.
 - **Descripción y receta de cada galleta**: nueva descripción para las 10 galletas y la lista de
   ingredientes, modelada en 3FN con `ingredientes` y la tabla asociativa `galleta_ingrediente`
   (N:M, con `posicion`), más el alérgeno de cada ingrediente. Migración
