@@ -10,6 +10,7 @@ const currency = (n) =>
 export default function Inventario() {
   const [galletas, setGalletas] = useState([])
   const [categorias, setCategorias] = useState([])
+  const [ingredientes, setIngredientes] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
@@ -17,9 +18,10 @@ export default function Inventario() {
 
   const cargar = async () => {
     setLoading(true)
-    const [g, c] = await Promise.all([api.getGalletas(), api.getCategorias()])
+    const [g, c, i] = await Promise.all([api.getGalletas(), api.getCategorias(), api.getIngredientes()])
     setGalletas(g)
     setCategorias(c)
+    setIngredientes(i)
     setLoading(false)
   }
 
@@ -30,13 +32,14 @@ export default function Inventario() {
   const abrirNuevo = () => {
     setEditing(null)
     form.resetFields()
-    form.setFieldsValue({ activa: true, stock: 0, precio: 0 })
+    form.setFieldsValue({ activa: true, stock: 0, precio: 0, ingredientes: [] })
     setModalOpen(true)
   }
 
   const abrirEditar = (g) => {
     setEditing(g)
-    form.setFieldsValue(g)
+    // La receta llega como objetos; el selector trabaja con los nombres.
+    form.setFieldsValue({ ...g, ingredientes: (g.ingredientes ?? []).map((i) => i.nombre) })
     setModalOpen(true)
   }
 
@@ -114,10 +117,22 @@ export default function Inventario() {
             <Input />
           </Form.Item>
           <Form.Item name="descripcion" label="Descripción">
-            <Input.TextArea rows={2} />
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Form.Item
+            name="ingredientes"
+            label="Ingredientes"
+            extra="De mayor a menor cantidad. Escribe y pulsa Enter para agregar uno nuevo."
+          >
+            <Select
+              mode="tags"
+              tokenSeparators={[',']}
+              placeholder="Harina de trigo, Mantequilla…"
+              options={ingredientes.map((i) => ({ value: i.nombre, label: i.nombre }))}
+            />
           </Form.Item>
           <Form.Item name="fotoUrl" label="URL de la foto" rules={[{ required: true }]}>
-            <Input placeholder="https://... o /galletas/archivo.svg" />
+            <Input placeholder="https://... o /galletas/archivo.jpg" />
           </Form.Item>
           <Form.Item name="categoriaId" label="Categoría" rules={[{ required: true }]}>
             <Select options={categorias.map((c) => ({ value: c.id, label: c.nombre }))} />
