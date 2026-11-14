@@ -1,6 +1,6 @@
 {
   "name": "tienda-galletas-backend",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "description": "API REST para demo academica de tienda de galletas (Express + Prisma + SQLite)",
   "main": "src/index.js",
@@ -10,7 +10,9 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "node prisma/seed.js",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "admin:crear": "node prisma/crear-admin.js",
+    "recetas:aplicar": "node prisma/aplicar-recetas.js"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Layout, Menu, Button } from 'antd'
+import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Layout, Menu, Button, Space, Spin, message } from 'antd'
 import {
   DashboardOutlined,
   AppstoreOutlined,
@@ -8,8 +8,12 @@ import {
   TeamOutlined,
   FileTextOutlined,
   OrderedListOutlined,
+  HistoryOutlined,
   ShopOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons'
+import { useAdminAuth } from '../context/AdminAuthContext.jsx'
+import { paleta } from '../theme.js'
 
 const { Sider, Header, Content } = Layout
 
@@ -20,12 +24,16 @@ const items = [
   { key: '/admin/categorias', icon: <TagsOutlined />, label: <Link to="/admin/categorias">Categorías</Link> },
   { key: '/admin/clientes', icon: <TeamOutlined />, label: <Link to="/admin/clientes">Clientes</Link> },
   { key: '/admin/pedidos', icon: <FileTextOutlined />, label: <Link to="/admin/pedidos">Pedidos y facturas</Link> },
+  { key: '/admin/historial', icon: <HistoryOutlined />, label: <Link to="/admin/historial">Historial de pedidos</Link> },
 ]
 
-// Cara de administración: barra lateral + panel. Sin login (demo académica).
+// Cara de administración: barra lateral + panel. Exige sesión de
+// administrador; el backend también la exige en cada ruta de datos, así que
+// ocultar la pantalla no es la única protección.
 export default function AdminLayout() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const { admin, cargando, logout } = useAdminAuth()
   const [colapsado, setColapsado] = useState(false)
 
   // Ver una factura desde el panel resalta "Pedidos y facturas".
@@ -38,6 +46,26 @@ export default function AdminLayout() {
       document.title = anterior
     }
   }, [])
+
+  const cerrarSesion = async () => {
+    try {
+      await logout()
+      message.success('Sesión de administrador cerrada')
+      navigate('/admin/login', { replace: true })
+    } catch (e) {
+      message.error(e.message)
+    }
+  }
+
+  if (cargando) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (!admin) return <Navigate to="/admin/login" replace state={{ from: pathname }} />
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -71,13 +99,19 @@ export default function AdminLayout() {
             alignItems: 'center',
             justifyContent: 'flex-end',
             background: '#ffffff',
-            borderBottom: '1px solid #dadce0',
+            borderBottom: `1px solid ${paleta.borde}`,
             paddingInline: 24,
           }}
         >
-          <Button icon={<ShopOutlined />} onClick={() => navigate('/')}>
-            Ver tienda
-          </Button>
+          <Space>
+            <span style={{ color: paleta.textoSecundario, fontWeight: 600 }}>{admin.nombre || admin.usuario}</span>
+            <Button icon={<ShopOutlined />} onClick={() => navigate('/')}>
+              Ver tienda
+            </Button>
+            <Button icon={<LogoutOutlined />} onClick={cerrarSesion}>
+              Salir
+            </Button>
+          </Space>
         </Header>
         <Content style={{ padding: 24 }}>
           <Outlet />

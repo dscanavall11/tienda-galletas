@@ -1,5 +1,6 @@
 const express = require('express');
 const prisma = require('../prismaClient');
+const { requiereAdmin, clienteOpcional } = require('../auth');
 
 const router = express.Router();
 const IVA = 0.19;
@@ -23,15 +24,20 @@ const INCLUDE = {
 };
 
 // Error con código HTTP para las reglas de negocio (validaciones, transiciones).
+// `codigo` permite que el frontend distinga casos concretos (por ejemplo, que
+// el correo del invitado ya tiene cuenta).
 class ErrorNegocio extends Error {
-  constructor(status, message) {
+  constructor(status, message, codigo) {
     super(message);
     this.status = status;
+    this.codigo = codigo;
   }
 }
 
 function responderError(res, e) {
-  if (e instanceof ErrorNegocio) return res.status(e.status).json({ error: e.message });
+  if (e instanceof ErrorNegocio) {
+    return res.status(e.status).json({ error: e.message, ...(e.codigo ? { codigo: e.codigo } : {}) });
+  }
   console.error(e);
   res.status(500).json({ error: 'Error interno del servidor' });
 }
@@ -75,7 +81,7 @@ async function cambiarEstado(tx, pedidoId, destino) {
   return tx.pedido.findUnique({ where: { id: pedidoId }, include: INCLUDE });
 }
 
-router.get('/', async (req, res) => {
+router.get('/', requiereAdmin, async (req, res) => {
   try {
     const pedidos = await prisma.pedido.findMany({ include: INCLUDE, orderBy: { id: 'desc' } });
     res.json(pedidos);
@@ -86,7 +92,7 @@ router.get('/', async (req, res) => {
 
 // La cola: pedidos activos en orden de llegada (el más antiguo primero).
 // Declarada antes de "/:id" para que "cola" no se interprete como un id.
-router.get('/cola', async (req, res) => {
+router.get('/cola', requiereAdmin, async (req, res) => {
   try {
     const pedidos = await prisma.pedido.findMany({
       where: { estado: { codigo: { in: ACTIVOS } } },
@@ -101,7 +107,7 @@ router.get('/cola', async (req, res) => {
 
 // Toma el pedido PENDIENTE más antiguo y lo pasa a EN_PREPARACION. Si otro
 // operador se lo lleva primero, reintenta con el siguiente de la fila.
-router.post('/cola/siguiente', async (req, res) => {
+router.post('/cola/siguiente', requiereAdmin, async (req, res) => {
   try {
     for (let intento = 0; intento < 3; intento++) {
       const siguiente = await prisma.pedido.findFirst({
@@ -117,6 +123,93 @@ router.post('/cola/siguiente', async (req, res) => {
       }
     }
     throw new ErrorNegocio(409, 'la cola cambio mientras se procesaba, intenta de nuevo');
+  } catch (e) {
+    responderError(res, e);
+  }
+});
+
+// Historial del panel: todos los pedidos (activos y cerrados) con filtros por
+// estado, rango de fechas y texto, paginados, más un resumen del conjunto
+// filtrado. Cada pedido trae su detalle y la bitácora de estados. Declarado
+// antes de "/:id" para que "historial" no se interprete como un id.
+//   ?estado=ENTREGADO,CANCELADO &desde=<ISO> &hasta=<ISO> &q=<texto>
+//   &page=1 &pageSize=10 &orden=desc
+router.get('/historial', requiereAdmin, async (req, res) => {
+  try {
+    const pagina = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const tamano = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
+    const orden = req.query.orden === 'asc' ? 'asc' : 'desc';
+
+    const estados = await prisma.estadoPedido.findMany({ orderBy: { orden: 'asc' } });
+    const validos = new Set(estados.map((e) => e.codigo));
+    const codigos = String(req.query.estado ?? '')
+      .split(',')
+      .map((c) => c.trim())
+      .filter((c) => validos.has(c));
+
+    const desde = req.query.desde ? new Date(req.query.desde) : null;
+    const hasta = req.query.hasta ? new Date(req.query.hasta) : null;
+    if ((desde && Number.isNaN(desde.getTime())) || (hasta && Number.isNaN(hasta.getTime()))) {
+      throw new ErrorNegocio(400, 'rango de fechas invalido');
+    }
+
+    const q = String(req.query.q ?? '').trim();
+    const where = {
+      ...(codigos.length ? { estado: { codigo: { in: codigos } } } : {}),
+      ...(desde || hasta
+        ? { fecha: { ...(desde ? { gte: desde } : {}), ...(hasta ? { lte: hasta } : {}) } }
+        : {}),
+      ...(q
+        ? {
+            OR: [
+              { cliente: { nombre: { contains: q } } },
+              { cliente: { email: { contains: q } } },
+              { factura: { numero: { contains: q } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [total, items, porEstado, ventas] = await Promise.all([
+      prisma.pedido.count({ where }),
+      prisma.pedido.findMany({
+        where,
+        include: { ...INCLUDE, historial: { include: { estado: true }, orderBy: { id: 'asc' } } },
+        orderBy: [{ fecha: orden }, { id: orden }],
+        skip: (pagina - 1) * tamano,
+        take: tamano,
+      }),
+      prisma.pedido.groupBy({ by: ['estadoId'], where, _count: { _all: true } }),
+      // Un pedido cancelado no es una venta.
+      prisma.factura.aggregate({
+        _sum: { total: true },
+        where: { pedido: { AND: [where, { estado: { codigo: { not: 'CANCELADO' } } }] } },
+      }),
+    ]);
+
+    const conteo = Object.fromEntries(estados.map((e) => [e.codigo, 0]));
+    for (const g of porEstado) {
+      const estado = estados.find((e) => e.id === g.estadoId);
+      if (estado) conteo[estado.codigo] = g._count._all;
+    }
+    const ventasTotal = Math.round((ventas._sum.total ?? 0) * 100) / 100;
+    const vendidos = total - conteo.CANCELADO;
+
+    res.json({
+      items,
+      total,
+      page: pagina,
+      pageSize: tamano,
+      estados,
+      resumen: {
+        pedidos: total,
+        ventas: ventasTotal,
+        entregados: conteo.ENTREGADO,
+        cancelados: conteo.CANCELADO,
+        enCurso: conteo.PENDIENTE + conteo.EN_PREPARACION + conteo.LISTO,
+        ticketPromedio: vendidos > 0 ? Math.round((ventasTotal / vendidos) * 100) / 100 : 0,
+      },
+    });
   } catch (e) {
     responderError(res, e);
   }
@@ -150,7 +243,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.patch('/:id/estado', async (req, res) => {
+router.patch('/:id/estado', requiereAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) throw new ErrorNegocio(404, 'pedido no encontrado');
@@ -163,12 +256,20 @@ router.patch('/:id/estado', async (req, res) => {
 
 // Transacción de compra: valida stock, reutiliza/crea cliente, crea el
 // pedido (en la cola, PENDIENTE) con su detalle, descuenta stock y emite la
-// factura. Todo o nada.
-router.post('/', async (req, res) => {
+// factura. Todo o nada. Se puede comprar como invitado (comportamiento
+// histórico) o con la sesión del cliente, en cuyo caso el pedido se vincula a
+// esa cuenta y se ignoran los datos de identidad del cuerpo.
+router.post('/', clienteOpcional, async (req, res) => {
   try {
     const { cliente, items } = req.body;
 
-    if (!cliente?.email || !cliente?.nombre) throw new ErrorNegocio(400, 'datos de cliente incompletos');
+    const nombre = typeof cliente?.nombre === 'string' ? cliente.nombre.trim() : '';
+    const email = typeof cliente?.email === 'string' ? cliente.email.trim().toLowerCase() : '';
+
+    if (!nombre) throw new ErrorNegocio(400, 'datos de cliente incompletos');
+    if (!req.cliente && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new ErrorNegocio(400, 'ingresa un correo válido');
+    }
     if (!Array.isArray(items) || items.length === 0) throw new ErrorNegocio(400, 'el carrito esta vacio');
 
     // Cantidades enteras > 0; si una galleta viene repetida se suman.
@@ -183,7 +284,7 @@ router.post('/', async (req, res) => {
     }
 
     const datosCliente = {
-      nombre: cliente.nombre,
+      nombre,
       telefono: cliente.telefono,
       direccion: cliente.direccion,
       documento: cliente.documento,
@@ -193,11 +294,31 @@ router.post('/', async (req, res) => {
       const pendiente = await tx.estadoPedido.findUnique({ where: { codigo: 'PENDIENTE' } });
       if (!pendiente) throw new ErrorNegocio(500, 'faltan los estados de pedido: ejecuta la migracion y el seed');
 
-      const clienteRow = await tx.cliente.upsert({
-        where: { email: cliente.email },
-        update: datosCliente,
-        create: { ...datosCliente, email: cliente.email },
-      });
+      let clienteRow;
+      if (req.cliente) {
+        // Con sesión, el pedido pertenece al cliente de la cuenta aunque el
+        // cuerpo traiga otro correo (evita comprar "a nombre de" otro).
+        clienteRow = await tx.cliente.update({
+          where: { id: req.cliente.id },
+          data: datosCliente,
+        });
+      } else {
+        // Invitado: si el correo ya tiene cuenta, no se compra como invitado;
+        // el frontend lo lleva a /ingresar (así no se mezclan identidades).
+        const existente = await tx.cliente.findUnique({
+          where: { email },
+          include: { cuenta: true },
+        });
+        if (existente?.cuenta) {
+          throw new ErrorNegocio(409, 'Este correo ya tiene una cuenta. Ingresa para continuar.', 'CUENTA_EXISTE');
+        }
+
+        clienteRow = await tx.cliente.upsert({
+          where: { email },
+          update: datosCliente,
+          create: { ...datosCliente, email },
+        });
+      }
 
       const galletas = await tx.galleta.findMany({ where: { id: { in: [...lineas.keys()] } } });
 

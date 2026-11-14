@@ -5,6 +5,8 @@ import { api } from '../api.js'
 import { useCart } from '../context/CartContext.jsx'
 import { currency } from '../format.js'
 import { FOTO_RESPALDO } from '../fotos.js'
+import { paleta } from '../theme.js'
+import DetalleGalleta from '../components/DetalleGalleta.jsx'
 
 export default function Catalogo() {
   const [galletas, setGalletas] = useState([])
@@ -13,6 +15,7 @@ export default function Catalogo() {
   const [busqueda, setBusqueda] = useState('')
   const [loading, setLoading] = useState(true)
   const [cantidades, setCantidades] = useState({})
+  const [detalle, setDetalle] = useState({ galleta: null, open: false })
   const { addItem } = useCart()
 
   useEffect(() => {
@@ -39,12 +42,30 @@ export default function Catalogo() {
 
   return (
     <>
-      <Typography.Title level={2} style={{ marginBottom: 4 }}>
-        Galletas artesanales
-      </Typography.Title>
-      <Typography.Paragraph type="secondary">
-        Elige tus favoritas, agrégalas al carrito y recibe tu factura al instante.
-      </Typography.Paragraph>
+      <div
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          marginBottom: 24,
+          padding: '28px 32px',
+          borderRadius: 24,
+          border: `1px solid ${paleta.borde}`,
+          background: 'linear-gradient(120deg, #ffd3e4 0%, #ffe6ef 55%, #fff0e3 100%)',
+        }}
+      >
+        <Typography.Title level={2} style={{ margin: 0, color: paleta.primarioActivo }}>
+          Galletas artesanales
+        </Typography.Title>
+        <Typography.Paragraph style={{ margin: '6px 0 0', maxWidth: 520, color: paleta.textoSecundario }}>
+          Elige tus favoritas, agrégalas al carrito y recibe tu factura al instante.
+        </Typography.Paragraph>
+        <span aria-hidden style={{ position: 'absolute', right: 28, top: 4, fontSize: 84, opacity: 0.35, transform: 'rotate(12deg)' }}>
+          🍪
+        </span>
+        <span aria-hidden style={{ position: 'absolute', right: 130, bottom: -4, fontSize: 40, opacity: 0.4 }}>
+          🍓
+        </span>
+      </div>
 
       <Flex gap="middle" wrap align="center" justify="space-between" style={{ marginBottom: 24 }}>
         <div style={{ maxWidth: '100%', overflowX: 'auto' }}>
@@ -77,13 +98,15 @@ export default function Catalogo() {
                   hoverable
                   cover={
                     <img
+                      className="galleta-foto"
                       alt={g.nombre}
                       src={g.fotoUrl}
                       onError={(e) => {
                         e.currentTarget.onerror = null
                         e.currentTarget.src = FOTO_RESPALDO
                       }}
-                      style={{ height: 180, objectFit: 'cover', filter: sinStock ? 'grayscale(1)' : undefined }}
+                      onClick={() => setDetalle({ galleta: g, open: true })}
+                      style={{ cursor: 'pointer', filter: sinStock ? 'grayscale(1)' : undefined }}
                     />
                   }
                   actions={[
@@ -118,12 +141,35 @@ export default function Catalogo() {
                     title={g.nombre}
                     description={
                       <>
-                        <div style={{ minHeight: 40, color: '#5f6368' }}>{g.descripcion}</div>
-                        <Tag style={{ marginTop: 8 }}>{g.categoria?.nombre}</Tag>
-                        <div style={{ marginTop: 8, fontSize: 16, fontWeight: 600, color: '#202124' }}>
+                        <div className="galleta-desc" style={{ color: paleta.textoSecundario }}>
+                          {g.descripcion}
+                        </div>
+                        <div>
+                          <Button
+                            type="link"
+                            size="small"
+                            style={{ paddingInline: 0, height: 'auto' }}
+                            onClick={() => setDetalle({ galleta: g, open: true })}
+                          >
+                            Ver ingredientes
+                          </Button>
+                        </div>
+                        <Tag
+                          style={{
+                            marginTop: 8,
+                            border: 'none',
+                            borderRadius: 999,
+                            paddingInline: 10,
+                            background: paleta.rosaClaro,
+                            color: paleta.primarioActivo,
+                          }}
+                        >
+                          {g.categoria?.nombre}
+                        </Tag>
+                        <div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: paleta.primario }}>
                           {currency(g.precio)}
                         </div>
-                        <div style={{ color: sinStock ? '#d93025' : '#5f6368', fontSize: 12 }}>
+                        <div style={{ color: sinStock ? paleta.error : paleta.textoSecundario, fontSize: 12 }}>
                           {sinStock ? 'Sin stock' : `Stock disponible: ${g.stock}`}
                         </div>
                       </>
@@ -135,6 +181,16 @@ export default function Catalogo() {
           })}
         </Row>
       )}
+
+      <DetalleGalleta
+        galleta={detalle.galleta}
+        open={detalle.open}
+        onClose={() => setDetalle((d) => ({ ...d, open: false }))}
+        onAgregar={(g, n) => {
+          addItem(g, n)
+          message.success(`${g.nombre} agregada al carrito`)
+        }}
+      />
     </>
   )
 }

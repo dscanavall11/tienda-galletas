@@ -6,6 +6,66 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 > Las versiones 1.0.0 a 1.2.0 se reconstruyeron al registrar el repositorio (2026-10-31) a partir
 > de las etapas reales del desarrollo de la demo.
 
+## [1.3.0] - 2026-11-14
+
+### Añadido
+- **Historial de pedidos** en el panel (`/admin/historial`): todos los pedidos con filtros por
+  estado (todos, en curso, entregados, cancelados), rango de fechas y texto (cliente, correo o
+  N° de factura), paginación y orden por fecha. Un resumen del conjunto filtrado (pedidos, en
+  curso, entregados, cancelados, ventas y ticket promedio) y, al desplegar un pedido, sus
+  productos, datos de entrega y la bitácora de estados con el tiempo hasta la entrega.
+- API `GET /api/pedidos/historial` (solo administrador): filtra y pagina en la base de datos y
+  calcula el resumen con `count`, `groupBy` y `aggregate`.
+- **Descripción y receta de cada galleta**: nueva descripción para las 10 galletas y la lista de
+  ingredientes, modelada en 3FN con `ingredientes` y la tabla asociativa `galleta_ingrediente`
+  (N:M, con `posicion`), más el alérgeno de cada ingrediente. Migración
+  `20261114163000_ingredientes` (solo agrega tablas).
+- La tienda muestra la descripción en cada tarjeta y una ficha ("Ver ingredientes") con foto,
+  ingredientes en orden, alérgenos resumidos y agregar al carrito. El logo de la tienda es
+  ahora la imagen de marca (`logo.webp`).
+- Inventario: campo **Ingredientes** (etiquetas con sugerencias) para editar la receta; los
+  ingredientes nuevos se crean al guardar.
+- API: `GET /api/ingredientes`; `GET /api/galletas` devuelve `ingredientes` y `alergenos`;
+  `POST`/`PUT /api/galletas` aceptan `ingredientes` (lista de nombres, en orden).
+- `npm run db:recetas`: carga descripciones e ingredientes en una BD existente sin borrar nada
+  (el seed también lo aplica).
+- `tools/generar-fotos/`: render procedural (Node, sin servicios externos) que genera las fotos.
+- **Cuentas de cliente** (`/registro` e `/ingresar`) con menú de perfil estilo Mercado Libre:
+  *Ingresar* y *Crear cuenta* sin sesión; *Mis compras*, *Mi perfil* y *Salir* con sesión.
+- **Compra como invitado** conservada: la cuenta es opcional y ambos formularios ofrecen
+  *Continuar como invitado*. Con sesión, el checkout llega pre-rellenado y el pedido se asocia
+  siempre al cliente de la sesión.
+- Si un invitado compra con un correo que ya tiene cuenta, la tienda pide ingresar
+  (`409 CUENTA_EXISTE`) en lugar de crear el pedido.
+- **Login de administrador** en `/admin/login`, sin registro público, con guard en el panel y
+  *Salir*. El backend protege las rutas de administración (responde `401` sin cookie válida).
+- Tablas `cuentas` (1:1 opcional con `clientes`) y `administradores`, con la migración
+  `20261031160308_autenticacion`.
+- Sesiones sin tabla en la base de datos: token firmado con HMAC-SHA256 en cookie `HttpOnly`
+  (`sesion_cliente` 7 días, `sesion_admin` 8 horas); contraseñas con `scrypt`.
+- API: `/api/auth/registro`, `/api/auth/ingresar`, `/api/auth/salir`, `/api/auth/me`,
+  `/api/auth/perfil`, `/api/auth/compras`, `/api/admin/auth/login`, `/api/admin/auth/logout` y
+  `/api/admin/auth/me`.
+- Script `npm run admin:crear` (no borra datos) que crea/actualiza el administrador de demo desde
+  `backend/.env`; variables `SESSION_SECRET`, `ADMIN_USUARIO`, `ADMIN_PASSWORD` y `ADMIN_NOMBRE`.
+- Páginas *Mis compras* y *Mi perfil* para clientes con sesión.
+
+### Cambiado
+- **Tema rosa pastel** en la tienda y el panel: acento frambuesa, fondos con lunares, botones en
+  píldora, barra lateral del panel en ciruela y fuente Nunito local (`@fontsource-variable/nunito`).
+  Los colores quedan centralizados en `frontend/src/theme.js` (`paleta`).
+- **Fotos nuevas, más apetitosas**: JPG 4:3 con luz cálida, relieve, chocolate y caramelo brillantes y
+  fondo rosa. Reemplazan a las ilustraciones SVG; el catálogo muestra la foto completa en 4:3.
+- El catálogo gana un banner de bienvenida y las tarjetas se levantan al pasar el mouse.
+- Botón **Salir** visible en el encabezado de la tienda cuando hay sesión de cliente (antes solo
+  estaba dentro del menú de la cuenta). Las pantallas de ingreso, registro y el login de
+  administración ganan una **X** para salir, y el login de administración un botón **Salir**.
+- El seed apunta a `/galletas/*.jpg`; la foto de respaldo (`placeholder.svg`) también es rosa.
+- CORS con `credentials: true` para que el frontend envíe las cookies de sesión.
+- El seed borra `cuentas` antes de `clientes` y conserva los administradores existentes.
+- El README documenta las cuentas, el administrador de demo (solo para demo), las rutas
+  protegidas y la limitación de no verificar el correo.
+
 ## [1.2.0] - 2026-10-31
 
 ### Añadido

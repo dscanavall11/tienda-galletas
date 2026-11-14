@@ -1,0 +1,12 @@
+{
+  "name": "generar-fotos",
+  "private": true,
+  "type": "module",
+  "description": "Genera las fotos de las galletas (JPG) con un render procedural: sin servicios externos ni imágenes de terceros",
+  "scripts": {
+    "fotos": "node render.mjs ../../frontend/public/galletas"
+  },
+  "dependencies": {
+    "jpeg-js": "^0.4.4"
+  }
+}

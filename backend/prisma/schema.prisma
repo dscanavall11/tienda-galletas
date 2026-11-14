@@ -23,18 +23,47 @@ model Categoria {
 }
 
 model Galleta {
-  id          Int             @id @default(autoincrement())
-  nombre      String
-  descripcion String?
-  fotoUrl     String
-  precio      Float
-  stock       Int             @default(0)
-  activa      Boolean         @default(true)
-  categoriaId Int
-  categoria   Categoria       @relation(fields: [categoriaId], references: [id])
-  detalles    DetallePedido[]
+  id           Int                  @id @default(autoincrement())
+  nombre       String
+  descripcion  String?
+  fotoUrl      String
+  precio       Float
+  stock        Int                  @default(0)
+  activa       Boolean              @default(true)
+  categoriaId  Int
+  categoria    Categoria            @relation(fields: [categoriaId], references: [id])
+  detalles     DetallePedido[]
+  ingredientes GalletaIngrediente[]
 
   @@map("galletas")
+}
+
+// Cada ingrediente se guarda una sola vez. Una lista "harina, mantequilla,
+// huevo" dentro de un campo de la galleta sería un atributo multivalor (rompe
+// la 1FN) y repetiría el mismo texto en muchas filas. `alergeno` es un valor
+// simple (un ingrediente declara a lo sumo uno), por eso no necesita tabla propia.
+model Ingrediente {
+  id       Int                  @id @default(autoincrement())
+  nombre   String               @unique
+  alergeno String?
+  galletas GalletaIngrediente[]
+
+  @@map("ingredientes")
+}
+
+// Entidad asociativa que resuelve la relación N:M entre Galleta e Ingrediente
+// (la receta). `posicion` es un atributo de la relación, no de ninguno de los
+// dos lados: el orden en que aparece el ingrediente en esa galleta (de mayor a
+// menor cantidad). Al borrar la galleta se borra su receta.
+model GalletaIngrediente {
+  galletaId     Int
+  galleta       Galleta     @relation(fields: [galletaId], references: [id], onDelete: Cascade)
+  ingredienteId Int
+  ingrediente   Ingrediente @relation(fields: [ingredienteId], references: [id])
+  posicion      Int
+
+  @@id([galletaId, ingredienteId])
+  @@map("galleta_ingrediente")
 }
 
 // Los datos del cliente se capturan una sola vez y se reutilizan por email;
@@ -47,8 +76,35 @@ model Cliente {
   direccion String?
   documento String?
   pedidos   Pedido[]
+  cuenta    Cuenta?
 
   @@map("clientes")
+}
+
+// Credenciales de acceso del cliente, separadas de sus datos de perfil
+// (Cliente): comprar como invitado no exige cuenta. La cuenta es opcional y
+// se vincula 1:1 con el cliente; el email sigue viviendo solo en `clientes`.
+// Nunca se guarda la contraseña en claro, solo su hash scrypt.
+model Cuenta {
+  id           Int      @id @default(autoincrement())
+  clienteId    Int      @unique
+  cliente      Cliente  @relation(fields: [clienteId], references: [id])
+  passwordHash String
+  creadaEn     DateTime @default(now())
+
+  @@map("cuentas")
+}
+
+// Operadores del panel. A diferencia de los clientes, no hay registro
+// público: el administrador de demo se crea con un script (ver README).
+model Administrador {
+  id           Int      @id @default(autoincrement())
+  usuario      String   @unique
+  nombre       String?
+  passwordHash String
+  creadoEn     DateTime @default(now())
+
+  @@map("administradores")
 }
 
 // Tabla de referencia con los estados del flujo de un pedido (la "cola").
