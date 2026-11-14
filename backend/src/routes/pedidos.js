@@ -128,6 +128,93 @@ router.post('/cola/siguiente', requiereAdmin, async (req, res) => {
   }
 });
 
+// Historial del panel: todos los pedidos (activos y cerrados) con filtros por
+// estado, rango de fechas y texto, paginados, más un resumen del conjunto
+// filtrado. Cada pedido trae su detalle y la bitácora de estados. Declarado
+// antes de "/:id" para que "historial" no se interprete como un id.
+//   ?estado=ENTREGADO,CANCELADO &desde=<ISO> &hasta=<ISO> &q=<texto>
+//   &page=1 &pageSize=10 &orden=desc
+router.get('/historial', requiereAdmin, async (req, res) => {
+  try {
+    const pagina = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const tamano = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10));
+    const orden = req.query.orden === 'asc' ? 'asc' : 'desc';
+
+    const estados = await prisma.estadoPedido.findMany({ orderBy: { orden: 'asc' } });
+    const validos = new Set(estados.map((e) => e.codigo));
+    const codigos = String(req.query.estado ?? '')
+      .split(',')
+      .map((c) => c.trim())
+      .filter((c) => validos.has(c));
+
+    const desde = req.query.desde ? new Date(req.query.desde) : null;
+    const hasta = req.query.hasta ? new Date(req.query.hasta) : null;
+    if ((desde && Number.isNaN(desde.getTime())) || (hasta && Number.isNaN(hasta.getTime()))) {
+      throw new ErrorNegocio(400, 'rango de fechas invalido');
+    }
+
+    const q = String(req.query.q ?? '').trim();
+    const where = {
+      ...(codigos.length ? { estado: { codigo: { in: codigos } } } : {}),
+      ...(desde || hasta
+        ? { fecha: { ...(desde ? { gte: desde } : {}), ...(hasta ? { lte: hasta } : {}) } }
+        : {}),
+      ...(q
+        ? {
+            OR: [
+              { cliente: { nombre: { contains: q } } },
+              { cliente: { email: { contains: q } } },
+              { factura: { numero: { contains: q } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [total, items, porEstado, ventas] = await Promise.all([
+      prisma.pedido.count({ where }),
+      prisma.pedido.findMany({
+        where,
+        include: { ...INCLUDE, historial: { include: { estado: true }, orderBy: { id: 'asc' } } },
+        orderBy: [{ fecha: orden }, { id: orden }],
+        skip: (pagina - 1) * tamano,
+        take: tamano,
+      }),
+      prisma.pedido.groupBy({ by: ['estadoId'], where, _count: { _all: true } }),
+      // Un pedido cancelado no es una venta.
+      prisma.factura.aggregate({
+        _sum: { total: true },
+        where: { pedido: { AND: [where, { estado: { codigo: { not: 'CANCELADO' } } }] } },
+      }),
+    ]);
+
+    const conteo = Object.fromEntries(estados.map((e) => [e.codigo, 0]));
+    for (const g of porEstado) {
+      const estado = estados.find((e) => e.id === g.estadoId);
+      if (estado) conteo[estado.codigo] = g._count._all;
+    }
+    const ventasTotal = Math.round((ventas._sum.total ?? 0) * 100) / 100;
+    const vendidos = total - conteo.CANCELADO;
+
+    res.json({
+      items,
+      total,
+      page: pagina,
+      pageSize: tamano,
+      estados,
+      resumen: {
+        pedidos: total,
+        ventas: ventasTotal,
+        entregados: conteo.ENTREGADO,
+        cancelados: conteo.CANCELADO,
+        enCurso: conteo.PENDIENTE + conteo.EN_PREPARACION + conteo.LISTO,
+        ticketPromedio: vendidos > 0 ? Math.round((ventasTotal / vendidos) * 100) / 100 : 0,
+      },
+    });
+  } catch (e) {
+    responderError(res, e);
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const id = Number(req.params.id);
