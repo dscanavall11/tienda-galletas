@@ -322,7 +322,7 @@ Versiones publicadas (ver [CHANGELOG.md](CHANGELOG.md)):
 | `v1.0.1` | Hotfix: el backend ya no se cae por errores de Prisma sin capturar |
 | `v1.1.0` | Dos caras (tienda y administración), clientes, fotos locales |
 | `v1.2.0` | Cola de pedidos con estados, historial y seguimiento del cliente |
-| `v1.3.0` | Cuentas de cliente, compra como invitado, login de administrador y rutas protegidas |
+| `v1.3.0` | Cuentas de cliente y login de administrador, tema rosa con fotos nuevas, recetas de las galletas e historial de pedidos |
 
 Con [git-flow (AVH)](https://github.com/petervanderdoes/gitflow-avh) instalado, el repositorio se
 prepara con `git config gitflow.branch.master main && git flow init -d` y se usa así:

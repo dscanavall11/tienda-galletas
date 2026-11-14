@@ -6,19 +6,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 > Las versiones 1.0.0 a 1.2.0 se reconstruyeron al registrar el repositorio (2026-10-31) a partir
 > de las etapas reales del desarrollo de la demo.
 
-## [Sin publicar]
-
-### Cambiado
-- **Tema rosa pastel** en la tienda y el panel: acento frambuesa, fondos con lunares, botones en
-  píldora, barra lateral del panel en ciruela y fuente Nunito local (`@fontsource-variable/nunito`).
-  Los colores quedan centralizados en `frontend/src/theme.js` (`paleta`).
-- **Fotos nuevas, más apetitosas**: JPG 4:3 con luz cálida, relieve, chocolate y caramelo brillantes y
-  fondo rosa. Reemplazan a las ilustraciones SVG; el catálogo muestra la foto completa en 4:3.
-- El catálogo gana un banner de bienvenida y las tarjetas se levantan al pasar el mouse.
-- Botón **Salir** visible en el encabezado de la tienda cuando hay sesión de cliente (antes solo
-  estaba dentro del menú de la cuenta). Las pantallas de ingreso, registro y el login de
-  administración ganan una **X** para salir, y el login de administración un botón **Salir**.
-- El seed apunta a `/galletas/*.jpg`; la foto de respaldo (`placeholder.svg`) también es rosa.
+## [1.3.0] - 2026-11-14
 
 ### Añadido
 - **Historial de pedidos** en el panel (`/admin/historial`): todos los pedidos con filtros por
@@ -42,10 +30,6 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - `npm run db:recetas`: carga descripciones e ingredientes en una BD existente sin borrar nada
   (el seed también lo aplica).
 - `tools/generar-fotos/`: render procedural (Node, sin servicios externos) que genera las fotos.
-
-## [1.3.0] - 2026-10-31
-
-### Añadido
 - **Cuentas de cliente** (`/registro` e `/ingresar`) con menú de perfil estilo Mercado Libre:
   *Ingresar* y *Crear cuenta* sin sesión; *Mis compras*, *Mi perfil* y *Salir* con sesión.
 - **Compra como invitado** conservada: la cuenta es opcional y ambos formularios ofrecen
@@ -67,6 +51,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - Páginas *Mis compras* y *Mi perfil* para clientes con sesión.
 
 ### Cambiado
+- **Tema rosa pastel** en la tienda y el panel: acento frambuesa, fondos con lunares, botones en
+  píldora, barra lateral del panel en ciruela y fuente Nunito local (`@fontsource-variable/nunito`).
+  Los colores quedan centralizados en `frontend/src/theme.js` (`paleta`).
+- **Fotos nuevas, más apetitosas**: JPG 4:3 con luz cálida, relieve, chocolate y caramelo brillantes y
+  fondo rosa. Reemplazan a las ilustraciones SVG; el catálogo muestra la foto completa en 4:3.
+- El catálogo gana un banner de bienvenida y las tarjetas se levantan al pasar el mouse.
+- Botón **Salir** visible en el encabezado de la tienda cuando hay sesión de cliente (antes solo
+  estaba dentro del menú de la cuenta). Las pantallas de ingreso, registro y el login de
+  administración ganan una **X** para salir, y el login de administración un botón **Salir**.
+- El seed apunta a `/galletas/*.jpg`; la foto de respaldo (`placeholder.svg`) también es rosa.
 - CORS con `credentials: true` para que el frontend envíe las cookies de sesión.
 - El seed borra `cuentas` antes de `clientes` y conserva los administradores existentes.
 - El README documenta las cuentas, el administrador de demo (solo para demo), las rutas
