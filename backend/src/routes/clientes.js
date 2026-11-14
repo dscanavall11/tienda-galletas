@@ -1,7 +1,12 @@
 const express = require('express');
 const prisma = require('../prismaClient');
+const { requiereAdmin } = require('../auth');
 
 const router = express.Router();
+
+// La lista y la edición de clientes son datos del panel: toda esta ruta exige
+// sesión de administrador (no basta con ocultar la pantalla en el frontend).
+router.use(requiereAdmin);
 
 router.get('/', async (req, res) => {
   const clientes = await prisma.cliente.findMany({ orderBy: { id: 'desc' } });

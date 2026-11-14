@@ -1,5 +1,6 @@
 const express = require('express');
 const prisma = require('../prismaClient');
+const { requiereAdmin, clienteOpcional } = require('../auth');
 
 const router = express.Router();
 const IVA = 0.19;
@@ -23,15 +24,20 @@ const INCLUDE = {
 };
 
 // Error con código HTTP para las reglas de negocio (validaciones, transiciones).
+// `codigo` permite que el frontend distinga casos concretos (por ejemplo, que
+// el correo del invitado ya tiene cuenta).
 class ErrorNegocio extends Error {
-  constructor(status, message) {
+  constructor(status, message, codigo) {
     super(message);
     this.status = status;
+    this.codigo = codigo;
   }
 }
 
 function responderError(res, e) {
-  if (e instanceof ErrorNegocio) return res.status(e.status).json({ error: e.message });
+  if (e instanceof ErrorNegocio) {
+    return res.status(e.status).json({ error: e.message, ...(e.codigo ? { codigo: e.codigo } : {}) });
+  }
   console.error(e);
   res.status(500).json({ error: 'Error interno del servidor' });
 }
@@ -75,7 +81,7 @@ async function cambiarEstado(tx, pedidoId, destino) {
   return tx.pedido.findUnique({ where: { id: pedidoId }, include: INCLUDE });
 }
 
-router.get('/', async (req, res) => {
+router.get('/', requiereAdmin, async (req, res) => {
   try {
     const pedidos = await prisma.pedido.findMany({ include: INCLUDE, orderBy: { id: 'desc' } });
     res.json(pedidos);
@@ -86,7 +92,7 @@ router.get('/', async (req, res) => {
 
 // La cola: pedidos activos en orden de llegada (el más antiguo primero).
 // Declarada antes de "/:id" para que "cola" no se interprete como un id.
-router.get('/cola', async (req, res) => {
+router.get('/cola', requiereAdmin, async (req, res) => {
   try {
     const pedidos = await prisma.pedido.findMany({
       where: { estado: { codigo: { in: ACTIVOS } } },
@@ -101,7 +107,7 @@ router.get('/cola', async (req, res) => {
 
 // Toma el pedido PENDIENTE más antiguo y lo pasa a EN_PREPARACION. Si otro
 // operador se lo lleva primero, reintenta con el siguiente de la fila.
-router.post('/cola/siguiente', async (req, res) => {
+router.post('/cola/siguiente', requiereAdmin, async (req, res) => {
   try {
     for (let intento = 0; intento < 3; intento++) {
       const siguiente = await prisma.pedido.findFirst({
@@ -150,7 +156,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.patch('/:id/estado', async (req, res) => {
+router.patch('/:id/estado', requiereAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) throw new ErrorNegocio(404, 'pedido no encontrado');
@@ -163,12 +169,20 @@ router.patch('/:id/estado', async (req, res) => {
 
 // Transacción de compra: valida stock, reutiliza/crea cliente, crea el
 // pedido (en la cola, PENDIENTE) con su detalle, descuenta stock y emite la
-// factura. Todo o nada.
-router.post('/', async (req, res) => {
+// factura. Todo o nada. Se puede comprar como invitado (comportamiento
+// histórico) o con la sesión del cliente, en cuyo caso el pedido se vincula a
+// esa cuenta y se ignoran los datos de identidad del cuerpo.
+router.post('/', clienteOpcional, async (req, res) => {
   try {
     const { cliente, items } = req.body;
 
-    if (!cliente?.email || !cliente?.nombre) throw new ErrorNegocio(400, 'datos de cliente incompletos');
+    const nombre = typeof cliente?.nombre === 'string' ? cliente.nombre.trim() : '';
+    const email = typeof cliente?.email === 'string' ? cliente.email.trim().toLowerCase() : '';
+
+    if (!nombre) throw new ErrorNegocio(400, 'datos de cliente incompletos');
+    if (!req.cliente && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new ErrorNegocio(400, 'ingresa un correo válido');
+    }
     if (!Array.isArray(items) || items.length === 0) throw new ErrorNegocio(400, 'el carrito esta vacio');
 
     // Cantidades enteras > 0; si una galleta viene repetida se suman.
@@ -183,7 +197,7 @@ router.post('/', async (req, res) => {
     }
 
     const datosCliente = {
-      nombre: cliente.nombre,
+      nombre,
       telefono: cliente.telefono,
       direccion: cliente.direccion,
       documento: cliente.documento,
@@ -193,11 +207,31 @@ router.post('/', async (req, res) => {
       const pendiente = await tx.estadoPedido.findUnique({ where: { codigo: 'PENDIENTE' } });
       if (!pendiente) throw new ErrorNegocio(500, 'faltan los estados de pedido: ejecuta la migracion y el seed');
 
-      const clienteRow = await tx.cliente.upsert({
-        where: { email: cliente.email },
-        update: datosCliente,
-        create: { ...datosCliente, email: cliente.email },
-      });
+      let clienteRow;
+      if (req.cliente) {
+        // Con sesión, el pedido pertenece al cliente de la cuenta aunque el
+        // cuerpo traiga otro correo (evita comprar "a nombre de" otro).
+        clienteRow = await tx.cliente.update({
+          where: { id: req.cliente.id },
+          data: datosCliente,
+        });
+      } else {
+        // Invitado: si el correo ya tiene cuenta, no se compra como invitado;
+        // el frontend lo lleva a /ingresar (así no se mezclan identidades).
+        const existente = await tx.cliente.findUnique({
+          where: { email },
+          include: { cuenta: true },
+        });
+        if (existente?.cuenta) {
+          throw new ErrorNegocio(409, 'Este correo ya tiene una cuenta. Ingresa para continuar.', 'CUENTA_EXISTE');
+        }
+
+        clienteRow = await tx.cliente.upsert({
+          where: { email },
+          update: datosCliente,
+          create: { ...datosCliente, email },
+        });
+      }
 
       const galletas = await tx.galleta.findMany({ where: { id: { in: [...lineas.keys()] } } });
 

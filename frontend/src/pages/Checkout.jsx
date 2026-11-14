@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Form, Input, Button, Typography, Card, Flex, message } from 'antd'
-import { useNavigate } from 'react-router-dom'
+import { Form, Input, Button, Typography, Card, Flex, Alert, Modal, Spin, message } from 'antd'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api.js'
 import { useCart } from '../context/CartContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 import { currency } from '../format.js'
+import { paleta } from '../theme.js'
 
 export default function Checkout() {
   const { items, total, clear } = useCart()
+  const { cliente, cargando } = useAuth()
+  const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
@@ -18,7 +22,29 @@ export default function Checkout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Con sesión, el checkout viene prellenado con el perfil de la cuenta.
+  useEffect(() => {
+    if (!cliente) return
+    form.setFieldsValue({
+      nombre: cliente.nombre,
+      email: cliente.email,
+      telefono: cliente.telefono,
+      documento: cliente.documento,
+      direccion: cliente.direccion,
+    })
+  }, [cliente, form])
+
   if (!items.length) return null
+
+  // Mientras se resuelve la sesión no mostramos el formulario vacío: si hay
+  // cuenta, el prellenado llega en cuanto responde /api/auth/me.
+  if (cargando) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}>
+        <Spin size="large" />
+      </div>
+    )
+  }
 
   const onFinish = async (values) => {
     setLoading(true)
@@ -31,6 +57,22 @@ export default function Checkout() {
       navigate(`/factura/${pedido.id}`, { state: { nueva: true } })
       clear()
     } catch (e) {
+      // Un invitado no puede usar el correo de una cuenta registrada: se le
+      // pide ingresar (o cambiar de correo y seguir como invitado).
+      if (e.codigo === 'CUENTA_EXISTE') {
+        Modal.confirm({
+          title: 'Ese correo ya tiene una cuenta',
+          content:
+            'Para comprar con este correo, ingresa a tu cuenta. También puedes volver, cambiar el correo y seguir como invitado.',
+          okText: 'Ingresar',
+          cancelText: 'Usar otro correo',
+          onOk: () =>
+            navigate('/ingresar', {
+              state: { from: '/checkout', email: values.email, motivo: 'cuenta-existe' },
+            }),
+        })
+        return
+      }
       message.error(e.message)
     } finally {
       setLoading(false)
@@ -41,7 +83,21 @@ export default function Checkout() {
     <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
       <div style={{ flex: 1, minWidth: 320 }}>
         <Typography.Title level={3}>Datos del cliente</Typography.Title>
-        <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
+        {cliente ? (
+          <Alert
+            type="info"
+            showIcon
+            style={{ marginBottom: 16 }}
+            title={`Comprando como ${cliente.nombre}`}
+            description="Estos datos vienen de tu cuenta. Puedes ajustar la dirección o el teléfono para este pedido."
+          />
+        ) : (
+          <Typography.Paragraph type="secondary">
+            ¿Tienes cuenta? <Link to="/ingresar" state={{ from: '/checkout' }}>Ingresa</Link> para tener
+            el checkout prellenado. También puedes comprar como invitado.
+          </Typography.Paragraph>
+        )}
+        <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={false}>
           <Form.Item name="nombre" label="Nombre completo" rules={[{ required: true, message: 'Ingresa tu nombre' }]}>
             <Input placeholder="Ana Pérez" />
           </Form.Item>
@@ -50,7 +106,7 @@ export default function Checkout() {
             label="Correo electrónico"
             rules={[{ required: true, type: 'email', message: 'Ingresa un correo válido' }]}
           >
-            <Input placeholder="ana@correo.com" />
+            <Input placeholder="ana@correo.com" disabled={!!cliente} />
           </Form.Item>
           <Form.Item name="telefono" label="Teléfono">
             <Input placeholder="3001234567" />
@@ -78,7 +134,7 @@ export default function Checkout() {
           ))}
           <Flex
             justify="space-between"
-            style={{ borderTop: '1px solid #dadce0', marginTop: 8, paddingTop: 8, fontWeight: 600 }}
+            style={{ borderTop: `1px solid ${paleta.borde}`, marginTop: 8, paddingTop: 8, fontWeight: 600 }}
           >
             <span>Total</span>
             <span>{currency(total)}</span>
