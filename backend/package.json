@@ -10,7 +10,9 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "node prisma/seed.js",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "admin:crear": "node prisma/crear-admin.js",
+    "recetas:aplicar": "node prisma/aplicar-recetas.js"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

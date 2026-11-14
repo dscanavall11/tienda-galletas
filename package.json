@@ -12,7 +12,9 @@
     "db:deploy": "npm run prisma:deploy --prefix backend",
     "db:migrate": "npm run prisma:migrate --prefix backend",
     "db:seed": "npm run prisma:seed --prefix backend",
-    "db:studio": "npm run prisma:studio --prefix backend"
+    "db:studio": "npm run prisma:studio --prefix backend",
+    "db:recetas": "npm run recetas:aplicar --prefix backend",
+    "admin:crear": "npm run admin:crear --prefix backend"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

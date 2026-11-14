@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const { aplicarRecetas } = require('./recetas');
 
 const prisma = new PrismaClient();
 
@@ -15,20 +16,21 @@ const ESTADOS = [
 ];
 
 // `foto` es el archivo de frontend/public/galletas/ (Vite lo sirve en
-// /galletas/<foto>). Son ilustraciones locales para que la demo no dependa de
-// internet ni de servicios de terceros; desde Inventario se puede pegar
-// cualquier otra URL de foto.
+// /galletas/<foto>). Son fotos locales (las genera tools/generar-fotos) para
+// que la demo no dependa de internet ni de servicios de terceros; desde
+// Inventario se puede pegar cualquier otra URL de foto. La descripción y los
+// ingredientes de cada galleta viven en ./recetas.js.
 const GALLETAS = [
-  { nombre: 'Chispas de Chocolate', categoria: 'Chocolate', precio: 3500, stock: 40, descripcion: 'Clasica, con chispas de chocolate belga.', foto: 'chispas-de-chocolate.svg' },
-  { nombre: 'Doble Chocolate', categoria: 'Chocolate', precio: 4000, stock: 30, descripcion: 'Cacao intenso con trozos de chocolate oscuro.', foto: 'doble-chocolate.svg' },
-  { nombre: 'Choco Almendra', categoria: 'Chocolate', precio: 4500, stock: 22, descripcion: 'Chocolate con almendras tostadas.', foto: 'choco-almendra.svg' },
-  { nombre: 'Avena y Pasas', categoria: 'Avena', precio: 3200, stock: 35, descripcion: 'Avena integral con pasas y miel.', foto: 'avena-y-pasas.svg' },
-  { nombre: 'Avena y Coco', categoria: 'Avena', precio: 3300, stock: 25, descripcion: 'Avena con coco rallado tostado.', foto: 'avena-y-coco.svg' },
-  { nombre: 'Oatmeal Cookie', categoria: 'Avena', precio: 3100, stock: 0, descripcion: 'Agotada, proximo lote en camino.', foto: 'oatmeal-cookie.svg' },
-  { nombre: 'Mantequilla Clasica', categoria: 'Mantequilla', precio: 2800, stock: 50, descripcion: 'Receta tradicional de mantequilla.', foto: 'mantequilla-clasica.svg' },
-  { nombre: 'Sable de Mantequilla', categoria: 'Mantequilla', precio: 3000, stock: 20, descripcion: 'Textura crocante, estilo frances.', foto: 'sable-de-mantequilla.svg' },
-  { nombre: 'Rellena de Arequipe', categoria: 'Rellenas', precio: 4200, stock: 15, descripcion: 'Dos galletas con relleno de arequipe.', foto: 'rellena-de-arequipe.svg' },
-  { nombre: 'Rellena de Frambuesa', categoria: 'Rellenas', precio: 4300, stock: 18, descripcion: 'Relleno de mermelada de frambuesa.', foto: 'rellena-de-frambuesa.svg' },
+  { nombre: 'Chispas de Chocolate', categoria: 'Chocolate', precio: 3500, stock: 40, foto: 'chispas-de-chocolate.jpg' },
+  { nombre: 'Doble Chocolate', categoria: 'Chocolate', precio: 4000, stock: 30, foto: 'doble-chocolate.jpg' },
+  { nombre: 'Choco Almendra', categoria: 'Chocolate', precio: 4500, stock: 22, foto: 'choco-almendra.jpg' },
+  { nombre: 'Avena y Pasas', categoria: 'Avena', precio: 3200, stock: 35, foto: 'avena-y-pasas.jpg' },
+  { nombre: 'Avena y Coco', categoria: 'Avena', precio: 3300, stock: 25, foto: 'avena-y-coco.jpg' },
+  { nombre: 'Oatmeal Cookie', categoria: 'Avena', precio: 3100, stock: 0, foto: 'oatmeal-cookie.jpg' },
+  { nombre: 'Mantequilla Clasica', categoria: 'Mantequilla', precio: 2800, stock: 50, foto: 'mantequilla-clasica.jpg' },
+  { nombre: 'Sable de Mantequilla', categoria: 'Mantequilla', precio: 3000, stock: 20, foto: 'sable-de-mantequilla.jpg' },
+  { nombre: 'Rellena de Arequipe', categoria: 'Rellenas', precio: 4200, stock: 15, foto: 'rellena-de-arequipe.jpg' },
+  { nombre: 'Rellena de Frambuesa', categoria: 'Rellenas', precio: 4300, stock: 18, foto: 'rellena-de-frambuesa.jpg' },
 ];
 
 async function main() {
@@ -37,14 +39,19 @@ async function main() {
   await prisma.detallePedido.deleteMany();
   await prisma.pedidoHistorial.deleteMany();
   await prisma.pedido.deleteMany();
+  await prisma.galletaIngrediente.deleteMany();
   await prisma.galleta.deleteMany();
+  await prisma.ingrediente.deleteMany();
+  // Las credenciales cuelgan de clientes: hay que borrarlas antes.
+  await prisma.cuenta.deleteMany();
   await prisma.cliente.deleteMany();
   await prisma.categoria.deleteMany();
   // AUTOINCREMENT recuerda el ultimo id en sqlite_sequence: sin esto cada
   // reseed sigue la numeracion (11, 12, ...) y una pestaña abierta con ids
   // viejos (carrito, selects del admin) apunta a filas que ya no existen.
-  // `estados_pedido` es de referencia y no se borra, así que se conserva.
-  await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name != 'estados_pedido'`;
+  // `estados_pedido` es de referencia y `administradores` es un dato de
+  // configuración que el seed no toca: se conservan sus secuencias.
+  await prisma.$executeRaw`DELETE FROM sqlite_sequence WHERE name NOT IN ('estados_pedido', 'administradores')`;
 
   for (const e of ESTADOS) {
     await prisma.estadoPedido.upsert({
@@ -64,7 +71,6 @@ async function main() {
     await prisma.galleta.create({
       data: {
         nombre: g.nombre,
-        descripcion: g.descripcion,
         fotoUrl: `/galletas/${g.foto}`,
         precio: g.precio,
         stock: g.stock,
@@ -73,7 +79,9 @@ async function main() {
     });
   }
 
-  console.log(`Listo: ${CATEGORIAS.length} categorias, ${GALLETAS.length} galletas.`);
+  const conReceta = await aplicarRecetas(prisma);
+
+  console.log(`Listo: ${CATEGORIAS.length} categorias, ${GALLETAS.length} galletas (${conReceta} con receta).`);
 }
 
 main()
