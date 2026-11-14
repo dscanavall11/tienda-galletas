@@ -1,5 +1,6 @@
 const express = require('express');
 const prisma = require('../prismaClient');
+const { requiereAdmin } = require('../auth');
 
 const router = express.Router();
 
@@ -8,7 +9,7 @@ router.get('/', async (req, res) => {
   res.json(categorias);
 });
 
-router.post('/', async (req, res) => {
+router.post('/', requiereAdmin, async (req, res) => {
   const { nombre } = req.body;
   if (!nombre) return res.status(400).json({ error: 'nombre es requerido' });
   try {
@@ -19,7 +20,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', requiereAdmin, async (req, res) => {
   const { nombre } = req.body;
   try {
     const categoria = await prisma.categoria.update({
@@ -32,7 +33,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requiereAdmin, async (req, res) => {
   try {
     await prisma.categoria.delete({ where: { id: Number(req.params.id) } });
     res.status(204).end();
